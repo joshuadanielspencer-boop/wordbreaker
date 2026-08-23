@@ -101,9 +101,12 @@ js/content/           morphemes.js, words.js (hand-authored) -> lexicon.js (deri
 js/core/              store, mastery, scheduler, log
 js/voice/             banks.js (the writing), rewards.js, voice.js (selection)
 js/content/notes.js   what 212 words literally say, and the stories behind them
-js/activities/        autopsy.js, equation.js, detective.js
+js/content/pseudo.js  GENERATED — legal words that do not exist
+js/core/analyze.js    best-effort matcher for words outside the corpus
+js/activities/        autopsy.js, equation.js, detective.js, invent.js
+js/ui/radar.js        scan a real passage for words worth pre-teaching
 js/ui/codex.js        the collection he is building
-tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs
+tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs, gen-pseudo.mjs
 ```
 
 ### The visual language is fixed
@@ -160,6 +163,49 @@ what the Codex displays; its `forms` list is the observed allomorphs, sorted
 longest-first for matching, which is the wrong order for display. Do not
 conflate the two (`pos` would show up as "pound").
 
+### The word that does not exist
+
+`tools/gen-pseudo.mjs` builds legal English words English never happened to
+make — `preflectable`, `trimortless`, `ungraphment` — from real morphemes, and
+verifies against the system dictionary that each one is genuinely not a word.
+Regenerate with:
+
+```bash
+node tools/gen-pseudo.mjs
+```
+
+This is the transfer test, and nothing else in the app answers the question it
+asks: has the learner learned the *morpheme*, or memorised 519 *words*? An
+invented word cannot be recognised, guessed from context, or remembered, so the
+only route through is to take it apart and read the pieces.
+
+Generation is deliberately constrained. Only productive affixes are used — `ad-`
+and `ob-` are excluded because real English attaches them only in assimilated
+form, so "adactal" is not a word English would ever have built. Suffixes are
+matched to root type using the glosses, which already encode the distinction: a
+verb root reads "to carry" and takes `-able`/`-er`/`-ive`/`-ment`, while a noun
+root reads "life" and takes `-less`/`-ful`/`-ic`. Without that, the generator
+happily produced "mispeltion" and "debioly". There is also a substring
+blocklist; the cost of getting that wrong in front of a ten-year-old is high.
+
+### Hard Word Radar
+
+Paste a page of whatever they are actually reading and the app finds the words
+worth taking apart first. `js/core/analyze.js` is the opposite of `words.js`:
+hand-authored decompositions are exact, this is best-effort matching against
+arbitrary text. It is deliberately conservative and claims a decomposition only
+when the middle exactly matches a known root, because a wrong decomposition
+teaches something untrue, which is worse than teaching nothing. Words it cannot
+parse are reported as such rather than silently dropped — otherwise the scan
+would look like it had covered the passage.
+
+## Deploying
+
+Pushing to `main` runs `.github/workflows/pages.yml`, which gates on
+`tools/check.mjs` before deploying. Content integrity is a build gate on
+purpose: a broken decomposition would teach the learner something untrue, so it
+must never reach the deployed site.
+
 ## Not built yet
 
 - **Audio.** Dictation spelling and audio↔print matching are the purest
@@ -177,6 +223,6 @@ conflate the two (`pos` would show up as "pound").
 - **The serialized story** — the actual retention mechanic.
 - **The math strand** — same "show the middle" mechanic on problems too big to
   hold in his head, so he can see it as one habit rather than two subjects.
-- **More Detective notes.** 212 of 342 words have one. The gap is mostly
+- **More Detective notes.** 212 of 519 words have one. The gap is mostly
   `-tion` derivatives, which the scheduler favours, so it currently substitutes
   an annotated word into detective slots rather than degrading them.

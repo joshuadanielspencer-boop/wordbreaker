@@ -195,7 +195,7 @@ function home() {
       <button class="btn ghost" data-act="parent">Progress</button>
     </div>`;
 
-  app.querySelector('[data-act="start"]').onclick = runSession;
+  app.querySelector('[data-act="start"]').onclick = () => runSession();
   app.querySelector('[data-act="codex"]').onclick = () => renderCodex(app, { onBack: home });
   app.querySelector('[data-act="parent"]').onclick = parentView;
   app.querySelector('[data-act="radar"]').onclick = () => renderRadar(app, {
@@ -222,7 +222,11 @@ function home() {
 // ----------------------------------------------------------------- session
 async function runSession(customPlan) {
   const S = load();
-  const plan = customPlan || planSession({ items: 14 });
+  // Guard against being wired directly as an event handler, which would pass
+  // an Event here and quietly produce a plan with no `seq`.
+  const plan = (customPlan && Array.isArray(customPlan.seq))
+    ? customPlan
+    : planSession({ items: 14 });
   const startedAt = Date.now();
   let correct = 0;
   const results = [];
