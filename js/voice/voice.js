@@ -29,7 +29,13 @@ function rollTier(personality) {
 }
 
 function fill(tpl, vars) {
-  return tpl.replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
+  return tpl
+    // {n,s} -> the plural ending for however many {n} is: "1 word", "3 words".
+    .replace(/\{(\w+),([a-z]*):([a-z]+)\}/g, (m, k, many, one) =>
+      vars[k] === undefined ? m : (Number(vars[k]) === 1 ? one : many))
+    .replace(/\{(\w+),([a-z]*)\}/g, (m, k, suffix) =>
+      vars[k] === undefined ? m : (Number(vars[k]) === 1 ? '' : suffix))
+    .replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
 }
 
 /**

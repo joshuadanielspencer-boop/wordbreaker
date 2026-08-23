@@ -102,11 +102,15 @@ js/core/              store, mastery, scheduler, log
 js/voice/             banks.js (the writing), rewards.js, voice.js (selection)
 js/content/notes.js   what 212 words literally say, and the stories behind them
 js/content/pseudo.js  GENERATED — legal words that do not exist
+js/content/notes-derived.js  GENERATED — literal meanings composed from base notes
 js/core/analyze.js    best-effort matcher for words outside the corpus
 js/activities/        autopsy.js, equation.js, detective.js, invent.js
 js/ui/radar.js        scan a real passage for words worth pre-teaching
+js/ui/boring.js       the fluency shelf
+js/core/fluency.js    per-item latency across days; retirement rules
 js/ui/codex.js        the collection he is building
-tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs, gen-pseudo.mjs
+tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs,
+                      gen-pseudo.mjs, gen-notes.mjs
 ```
 
 ### The visual language is fixed
@@ -199,6 +203,28 @@ teaches something untrue, which is worse than teaching nothing. Words it cannot
 parse are reported as such rather than silently dropped — otherwise the scan
 would look like it had covered the passage.
 
+### Make it Boring
+
+The fluency layer. Accuracy is not the goal here; effortlessness is — a word
+answered correctly after visible work is not finished, and no other part of the
+app notices the difference. `js/core/fluency.js` watches how long each item
+takes across days and retires it once it has stopped costing anything.
+
+Retirement is measured against the learner's **own baseline for that item**,
+never an absolute number of seconds. An absolute threshold would punish a
+careful reader for being careful and would say nothing about whether anything
+had changed. Three gates, all of which must pass:
+
+- seen at least 4 times across at least 3 **separate days** — cramming cannot
+  retire a word
+- the last 3 attempts all correct
+- the median of the last 3 times down to 65% of the median of the first 3, or
+  simply under 3.5 seconds
+
+Being accurate but still slow does not retire a word. That is the entire point.
+The timer is never shown; the only visible goal is that words become dull and
+go away.
+
 ## Deploying
 
 Pushing to `main` runs `.github/workflows/pages.yml`, which gates on
@@ -223,6 +249,9 @@ must never reach the deployed site.
 - **The serialized story** — the actual retention mechanic.
 - **The math strand** — same "show the middle" mechanic on problems too big to
   hold in his head, so he can see it as one habit rather than two subjects.
-- **More Detective notes.** 212 of 519 words have one. The gap is mostly
+- **More Detective notes.** 272 of 519 words now have one (212 hand-written,
+  60 derived). The remaining gap is mostly `-able`/`-ible` adjectives, which
+  need a past participle ("able to be seen") that cannot be composed
+  mechanically from "to see" without an irregular-verb table. The gap is mostly
   `-tion` derivatives, which the scheduler favours, so it currently substitutes
   an annotated word into detective slots rather than degrading them.

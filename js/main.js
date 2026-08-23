@@ -14,6 +14,8 @@ import { mount as detective } from './activities/detective.js';
 import { mount as invent } from './activities/invent.js';
 import { renderCodex } from './ui/codex.js';
 import { renderRadar } from './ui/radar.js';
+import { renderBoring } from './ui/boring.js';
+import { boringItems, fluencySummary } from './core/fluency.js';
 
 const ACTIVITIES = { autopsy, equation, detective, invent };
 const PERSONALITIES = ['normal', 'funny', 'ridiculous', 'unsupervised'];
@@ -184,6 +186,7 @@ function home() {
       <button class="btn primary big" data-act="start">Start — 10 minutes</button>
       <button class="btn big" data-act="codex">Codex &nbsp;·&nbsp; ${met}/${teach.length}</button>
       <button class="btn big" data-act="radar">Hard Word Radar</button>
+      <button class="btn big" data-act="boring">Make it Boring &nbsp;·&nbsp; ${fluencySummary().retired} retired</button>
     </div>
     <div class="stats">
       <div class="stat"><b>${S.sessions.length}</b><span>sessions</span></div>
@@ -198,6 +201,15 @@ function home() {
   app.querySelector('[data-act="start"]').onclick = () => runSession();
   app.querySelector('[data-act="codex"]').onclick = () => renderCodex(app, { onBack: home });
   app.querySelector('[data-act="parent"]').onclick = parentView;
+  app.querySelector('[data-act="boring"]').onclick = () => renderBoring(app, {
+    onBack: home,
+    onStart: items => runSession({
+      mode: 'boring',
+      before: boringItems().map(i => i.text),
+      targets: [...new Set(items.flatMap(i => i.word.morphemes))],
+      seq: items.map(i => ({ word: i.word, activity: 'autopsy', phase: 'boring' })),
+    }),
+  });
   app.querySelector('[data-act="radar"]').onclick = () => renderRadar(app, {
     onBack: home,
     onPractice: words => runSession({
@@ -305,12 +317,21 @@ function summary(plan, correct, newlyMet) {
   const ctx = correct === total ? 'perfect' : 'sessionEnd';
   const nowBoring = plan.targets.filter(id => level(id) === LEVEL.BORING);
 
+  // Retiring a word is the point of the fluency mode, so it gets its own
+  // moment rather than a line in a list.
+  const wasBoring = new Set(plan.before || []);
+  const retired = boringItems().map(i => i.text).filter(t => !wasBoring.has(t));
+
   app.innerHTML = `
     <div class="topbar"><span class="brand">WORDBREAKER</span></div>
     <div class="hero">
       <h1 style="font-size:44px">${correct} / ${total}</h1>
       <p class="msg plainmsg">${esc(say(ctx, { correct, total }, S.settings.personality))}</p>
     </div>
+    ${retired.length ? `
+      <div class="section-title">now officially boring</div>
+      <div class="family">${retired.map(t => `<span class="dull">${t}</span>`).join('')}</div>
+      <p class="msg plainmsg">${esc(say('retired', { n: retired.length, word: retired[0] }, S.settings.personality))}</p>` : ''}
     ${newlyMet.length ? `
       <div class="section-title">new to the codex</div>
       <div class="codex-grid">${newlyMet.map(id => {

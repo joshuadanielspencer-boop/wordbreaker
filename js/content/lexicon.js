@@ -6,6 +6,7 @@
 import { MORPHEMES, ORIGIN_LABEL } from './morphemes.js';
 import { WORDS, parseSpec } from './words.js';
 import { NOTES } from './notes.js';
+import { DERIVED_LITS } from './notes-derived.js';
 import { PSEUDO_SPECS } from './pseudo.js';
 
 const M = {};
@@ -72,7 +73,13 @@ export const PART_TYPE = { prefix: 'prefix', root: 'root', suffix: 'suffix' };
 export function partType(morphemeId) { return M[morphemeId].type; }
 
 // ------------------------------------------------------------ Word Detective
-for (const w of WORDS) w.note = NOTES[w.text] || null;
+// Hand-written notes always win — they carry a story, which is the point of
+// the mode. Derived meanings are true but not interesting, so they are marked
+// as such and the UI does not promise a story for them.
+for (const w of WORDS) {
+  w.note = NOTES[w.text]
+    || (DERIVED_LITS[w.text] ? { lit: DERIVED_LITS[w.text], derived: true } : null);
+}
 
 /** Words with a hand-authored literal reading — the Detective pool. */
 export const DETECTIVE = WORDS.filter(w => w.note);

@@ -356,6 +356,40 @@ export const BANKS = {
     ],
   },
 
+  retired: {
+    plain: [
+      '{n} word{n,s} retired.',
+      'That is {n} fewer thing{n,s} to work at.',
+      'Retired: {n}. No effort left in {n,them:it}.',
+    ],
+    flavor: [
+      '{word} is finished. Not learned — finished. It does not take you any effort at all now.',
+      '{n} word{n,s} became boring today. That was the entire objective.',
+      'These used to be work. Now they are not. That is the whole thing we are doing here.',
+    ],
+    joke: [
+      '{word} has been declared boring and escorted from the building.',
+      '{n} word{n,s} retired. They have been given small pensions and asked to leave.',
+      'Congratulations. You have made {word} completely uninteresting. This is a real achievement and it sounds like an insult.',
+    ],
+    absurd: [
+      'THE FOLLOWING WORDS HAVE BEEN RETIRED FROM ACTIVE SERVICE.\nA plaque will not be erected.\nNobody will speak of them again.',
+    ],
+  },
+
+  boringOpen: {
+    plain: ['Words you already know. Again.', 'Round of familiar ones.'],
+    flavor: [
+      'None of these should surprise you. That is the point.',
+      'You have seen all of these before. We are doing them until they are dull.',
+    ],
+    joke: [
+      'Yes, I know. You have done these. Do them again. Science demands sacrifice.',
+      'These are the boring ones. They are not boring enough yet.',
+    ],
+    absurd: [],
+  },
+
   boring: {
     plain: ['{morph} is now boring. That was the goal.'],
     flavor: [

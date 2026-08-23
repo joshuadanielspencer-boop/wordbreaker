@@ -3,6 +3,7 @@
 import { MORPHEMES } from '../js/content/morphemes.js';
 import { WORD_SPECS, parseSpec } from '../js/content/words.js';
 import { NOTES } from '../js/content/notes.js';
+import { DERIVED_LITS } from '../js/content/notes-derived.js';
 import { readFileSync, existsSync } from 'node:fs';
 
 const DICT = '/usr/share/dict/words';
@@ -42,6 +43,11 @@ for (const spec of WORD_SPECS) {
 
 // Every note must attach to a real headword, or Word Detective silently
 // loses items.
+for (const key of Object.keys(DERIVED_LITS)) {
+  if (!seen.has(key)) errors.push(`DERIVED_LITS key "${key}" is not a headword — regenerate with tools/gen-notes.mjs`);
+  if (NOTES[key]) warnings.push(`"${key}" has both a hand-written and a derived note; the hand-written one wins`);
+}
+
 for (const key of Object.keys(NOTES)) {
   if (!seen.has(key)) errors.push(`NOTES key "${key}" is not a headword in words.js`);
   if (!NOTES[key].lit) errors.push(`NOTES "${key}" has no lit phrase`);
@@ -51,7 +57,9 @@ for (const key of Object.keys(NOTES)) {
 const unused = Object.keys(MORPHEMES).filter(id => !observedForms.has(id));
 
 const withStory = Object.values(NOTES).filter(n => n.note).length;
-console.log(`words: ${WORD_SPECS.length}   morphemes: ${Object.keys(MORPHEMES).length}   notes: ${Object.keys(NOTES).length} (${withStory} with stories)`);
+const totalNotes = new Set([...Object.keys(NOTES), ...Object.keys(DERIVED_LITS)]).size;
+console.log(`words: ${WORD_SPECS.length}   morphemes: ${Object.keys(MORPHEMES).length}`);
+console.log(`notes: ${totalNotes}/${WORD_SPECS.length} (${Object.keys(NOTES).length} hand-written, ${withStory} with stories, ${Object.keys(DERIVED_LITS).length} derived)`);
 if (lexicon) console.log(`lexicon: ${DICT} (${lexicon.size} entries)`);
 else console.log('lexicon: NOT FOUND — real-word check skipped');
 
