@@ -1,0 +1,263 @@
+// What words LITERALLY say, once you can see the pieces.
+//
+// `lit`  — the literal reading, as a short phrase. Used both as the answer in
+//          Word Detective and as the source of its distractors: words sharing
+//          a root make each other's wrong answers, which forces attention onto
+//          the one piece that actually differs.
+// `note` — the story. Optional, and the reason this mode is worth doing.
+//
+// Every key must be a headword in words.js. tools/check.mjs enforces it.
+
+export const NOTES = {
+  // ---- spect: to look ----
+  inspect:     { lit: 'to look into' },
+  inspector:   { lit: 'one who looks into things' },
+  spectator:   { lit: 'one who looks' },
+  respect:     { lit: 'to look again', note: 'To respect someone is to look at them twice — to think they are worth a second look.' },
+  prospect:    { lit: 'to look forward' },
+  suspect:     { lit: 'to look at from underneath', note: 'A sideways, from-below sort of look. The look you give someone you do not quite trust.' },
+  circumspect: { lit: 'looking all around you', note: 'Careful. Checking every direction before you move.' },
+  perspective: { lit: 'looking through' },
+
+  // ---- port: to carry ----
+  import:    { lit: 'to carry in' },
+  export:    { lit: 'to carry out' },
+  transport: { lit: 'to carry across' },
+  transportation: { lit: 'the act of carrying across' },
+  portable:  { lit: 'able to be carried' },
+  support:   { lit: 'to carry from underneath', note: 'Which is exactly what a supporting wall does, and roughly what a friend does.' },
+  deport:    { lit: 'to carry away' },
+  portal:    { lit: 'a thing to do with carrying through' },
+  important: { lit: 'carrying weight', note: 'An important thing is one that carries something into the situation. It brings weight with it.' },
+
+  // ---- dict: to say ----
+  predict:    { lit: 'to say beforehand' },
+  prediction: { lit: 'the act of saying beforehand' },
+  contradict: { lit: 'to speak against' },
+  dictator:   { lit: 'one who does the saying', note: 'Originally a real Roman job title. Rome would appoint a dictator during an emergency and expect him to hand the power back afterwards. This did not always happen.' },
+  dictionary: { lit: 'a place for the sayings' },
+  unpredictable: { lit: 'not able to be said beforehand' },
+
+  // ---- script: to write ----
+  describe:     { lit: 'to write down' },
+  description:  { lit: 'the act of writing down' },
+  prescription: { lit: 'the thing written beforehand' },
+  inscription:  { lit: 'the thing written into', note: 'Carved in. Which is why inscriptions are on gravestones and monuments rather than on napkins.' },
+  manuscript:   { lit: 'written by hand', note: 'Every book was a manuscript until the printing press. Somebody sat and copied the whole thing out.' },
+  subscription: { lit: 'the thing written underneath', note: 'You subscribed by signing your name at the bottom of the list.' },
+  transcribe:   { lit: 'to write across' },
+
+  // ---- rupt: to break ----
+  erupt:      { lit: 'to break out' },
+  interrupt:  { lit: 'to break in between' },
+  disrupt:    { lit: 'to break apart' },
+  corrupt:    { lit: 'broken all together' },
+  eruption:   { lit: 'the act of breaking out' },
+
+  // ---- struct: to build ----
+  construct:   { lit: 'to build together' },
+  construction:{ lit: 'the act of building together' },
+  destruction: { lit: 'the act of un-building' },
+  instruction: { lit: 'the act of building in', note: 'Teaching as construction: you are building something into someone.' },
+  structure:   { lit: 'the result of building' },
+  indestructible: { lit: 'not able to be un-built' },
+
+  // ---- tract: to pull ----
+  attract:  { lit: 'to pull toward' },
+  subtract: { lit: 'to pull out from under' },
+  extract:  { lit: 'to pull out' },
+  distract: { lit: 'to pull apart', note: 'A distraction pulls your attention in pieces, in different directions at once.' },
+  contract: { lit: 'to pull together' },
+  tractor:  { lit: 'the thing that pulls' },
+  retract:  { lit: 'to pull back' },
+
+  // ---- ject: to throw ----
+  eject:     { lit: 'to throw out' },
+  reject:    { lit: 'to throw back' },
+  inject:    { lit: 'to throw in' },
+  project:   { lit: 'to throw forward', note: 'A projector literally throws a picture forward onto the wall.' },
+  interject: { lit: 'to throw in between' },
+  objection: { lit: 'the act of throwing against' },
+
+  // ---- duct / mit / pos ----
+  conduct:  { lit: 'to lead together' },
+  produce:  { lit: 'to lead forward' },
+  reduce:   { lit: 'to lead back' },
+  aqueduct: { lit: 'a leading of water', note: 'The Romans built stone channels to lead water into cities from miles away. Some still stand.' },
+  transmit: { lit: 'to send across' },
+  submit:   { lit: 'to send under' },
+  dismiss:  { lit: 'to send apart' },
+  emit:     { lit: 'to send out' },
+  mission:  { lit: 'a sending' },
+  compose:  { lit: 'to place together' },
+  expose:   { lit: 'to place out' },
+  postpone: { lit: 'to place after' },
+  component:{ lit: 'a thing placed together with others' },
+
+  // ---- vert: to turn ----
+  convert:   { lit: 'to turn with' },
+  invert:    { lit: 'to turn inward' },
+  divert:    { lit: 'to turn apart' },
+  reverse:   { lit: 'to turn back' },
+  vertical:  { lit: 'to do with turning', note: 'From the turning point directly overhead — the top of the sky. Straight up.' },
+  universe:  { lit: 'turned into one', note: 'Everything there is, turned together into a single thing.' },
+
+  // ---- voc / aud / vis ----
+  vocal:     { lit: 'to do with the voice' },
+  provoke:   { lit: 'to call forward' },
+  revoke:    { lit: 'to call back' },
+  advocate:  { lit: 'to call toward', note: 'An advocate is someone called to your side to speak for you.' },
+  audible:   { lit: 'able to be heard' },
+  audience:  { lit: 'the ones who are hearing' },
+  invisible: { lit: 'not able to be seen' },
+  television:{ lit: 'seeing far away' },
+  supervisor:{ lit: 'one who sees from above' },
+  provide:   { lit: 'to see forward', note: 'To provide is to see ahead and have the thing ready before it is needed.' },
+  evidence:  { lit: 'the state of being seen out' },
+
+  // ---- form / gress / fact ----
+  transform:  { lit: 'to shape across' },
+  uniform:    { lit: 'one shape', note: 'Everyone in the same shape. Which is the entire point of a uniform.' },
+  information:{ lit: 'the act of shaping inward', note: 'Information puts a shape into your mind that was not there before.' },
+  progress:   { lit: 'to step forward' },
+  congress:   { lit: 'a stepping together' },
+  aggressive: { lit: 'tending to step toward' },
+  factory:    { lit: 'the place for making' },
+  manufacture:{ lit: 'to make by hand', note: 'Now it mostly means the opposite — made by machine, in bulk.' },
+  perfect:    { lit: 'made thoroughly, all the way through' },
+  magnify:    { lit: 'to make large' },
+
+  // ---- tain / cede / flect / pel / sist / scend ----
+  contain:  { lit: 'to hold together' },
+  detain:   { lit: 'to hold down' },
+  obtain:   { lit: 'to hold against' },
+  proceed:  { lit: 'to go forward' },
+  precede:  { lit: 'to go before' },
+  recede:   { lit: 'to go back' },
+  excess:   { lit: 'a going out', note: 'Going out past where the limit was.' },
+  reflect:  { lit: 'to bend back' },
+  flexible: { lit: 'able to be bent' },
+  deflect:  { lit: 'to bend away' },
+  repel:    { lit: 'to drive back' },
+  expel:    { lit: 'to drive out' },
+  propel:   { lit: 'to drive forward' },
+  impulse:  { lit: 'a driving inward' },
+  resist:   { lit: 'to stand back against' },
+  persist:  { lit: 'to stand all the way through' },
+  assistant:{ lit: 'one who stands toward you' },
+  irresistible: { lit: 'not able to be stood against' },
+  ascend:   { lit: 'to climb toward' },
+  descend:  { lit: 'to climb down' },
+  descendant: { lit: 'one who climbs down', note: 'Down the family tree, generation by generation, to you.' },
+  transcend:{ lit: 'to climb across' },
+
+  // ---- sect / man / ped ----
+  insect:      { lit: 'cut into', note: 'Look at an ant closely. Its body looks cut into three pieces. That is the whole name.' },
+  dissect:     { lit: 'to cut apart' },
+  bisect:      { lit: 'to cut in two' },
+  intersection:{ lit: 'the act of cutting between', note: 'Two roads cutting through each other.' },
+  manual:      { lit: 'to do with the hand' },
+  pedal:       { lit: 'to do with the foot' },
+  tripod:      { lit: 'three feet' },
+  expedition:  { lit: 'the act of freeing the feet', note: 'Getting your feet unstuck so you can finally set off.' },
+
+  // ---- mort / viv / sens / nov ----
+  immortal: { lit: 'not death' },
+  survive:  { lit: 'to live over', note: 'To live on over the top of the thing that should have finished you.' },
+  revive:   { lit: 'to live again' },
+  vital:    { lit: 'to do with life' },
+  sensible: { lit: 'able to be felt' },
+  sensation:{ lit: 'the act of feeling' },
+  innovation:{ lit: 'the act of making new' },
+  renovate: { lit: 'to make new again' },
+
+  // ---- fer / cap / fort / hend ----
+  transfer:     { lit: 'to carry across' },
+  refer:        { lit: 'to carry back' },
+  prefer:       { lit: 'to carry before', note: 'What you prefer is what you carry out in front of the rest.' },
+  different:    { lit: 'carrying apart' },
+  circumference:{ lit: 'the carrying around' },
+  capture:      { lit: 'the act of taking' },
+  accept:       { lit: 'to take toward yourself' },
+  receive:      { lit: 'to take back' },
+  deceive:      { lit: 'to take down', note: 'To take someone down a path that is not the real one.' },
+  comfort:      { lit: 'with strength', note: 'Comfort was never about cushions. It meant giving someone strength.' },
+  effort:       { lit: 'strength out' },
+  fortify:      { lit: 'to make strong' },
+  comprehend:   { lit: 'to grasp all together' },
+  incomprehensible: { lit: 'not able to be grasped all together' },
+  apprehensive: { lit: 'tending to grasp toward', note: 'Reaching out for the thing that might go wrong, before it does.' },
+
+  // ---- graph / phon / scope / meter ----
+  autograph:   { lit: 'self writing' },
+  photograph:  { lit: 'light writing', note: 'That is genuinely what a camera does. It writes with light.' },
+  paragraph:   { lit: 'written alongside', note: 'The mark was originally scribbled in the margin to show where a new bit started.' },
+  telegraph:   { lit: 'writing far away' },
+  geography:   { lit: 'earth writing' },
+  biography:   { lit: 'life writing' },
+  autobiography: { lit: 'self life writing' },
+  diagram:     { lit: 'written across' },
+  telephone:   { lit: 'far sound' },
+  microphone:  { lit: 'small sound' },
+  megaphone:   { lit: 'huge sound' },
+  homophone:   { lit: 'same sound' },
+  symphony:    { lit: 'sounds together' },
+  telescope:   { lit: 'looking far' },
+  microscope:  { lit: 'looking at small things' },
+  periscope:   { lit: 'looking around' },
+  thermometer: { lit: 'heat measurer' },
+  diameter:    { lit: 'measuring across' },
+  perimeter:   { lit: 'measuring around' },
+  geometry:    { lit: 'earth measuring', note: 'It started as land surveying — measuring fields after the Nile flooded and washed the boundaries away.' },
+  symmetry:    { lit: 'measuring the same' },
+  centimeter:  { lit: 'a hundredth of a measure' },
+
+  // ---- bio / geo / chron / therm / photo / hydr / astro ----
+  biology:     { lit: 'the study of life' },
+  geology:     { lit: 'the study of the earth' },
+  chronology:  { lit: 'the study of time' },
+  synchronize: { lit: 'to make times together' },
+  chronic:     { lit: 'to do with time', note: 'A chronic problem is one that has settled in for the long haul.' },
+  thermal:     { lit: 'to do with heat' },
+  thermostat:  { lit: 'heat stander', note: 'A thing that makes the heat stand still where you put it.' },
+  photosynthesis: { lit: 'putting together with light', note: 'A plant takes light and puts a whole meal together out of air and water. The name says exactly that.' },
+  dehydrate:   { lit: 'to take the water out' },
+  hydroelectric: { lit: 'water electricity' },
+  astronaut:   { lit: 'star sailor', note: 'Sailor. Not pilot, not driver. Somebody decided the right word for space was sailing.' },
+  astronomy:   { lit: 'the law of the stars' },
+  asteroid:    { lit: 'star-shaped' },
+  disaster:    { lit: 'bad star', note: 'Astrologers blamed catastrophes on the stars being badly arranged. If your life fell apart, you had a bad star.' },
+
+  // ---- psych / path / cycl / dem / crat / arch ----
+  psychology: { lit: 'the study of the mind' },
+  sympathy:   { lit: 'feeling together with' },
+  empathy:    { lit: 'feeling into', note: 'Sympathy is feeling alongside someone. Empathy is climbing inside and feeling it from there.' },
+  apathy:     { lit: 'without feeling' },
+  telepathy:  { lit: 'feeling from far away' },
+  bicycle:    { lit: 'two wheels' },
+  tricycle:   { lit: 'three wheels' },
+  recycle:    { lit: 'to wheel again' },
+  democracy:  { lit: 'people power' },
+  democratic: { lit: 'to do with people power' },
+  epidemic:   { lit: 'upon the people' },
+  autocrat:   { lit: 'self ruler' },
+  monarch:    { lit: 'one ruler' },
+  anarchy:    { lit: 'no ruler' },
+
+  // ---- assorted ----
+  antibiotic:  { lit: 'against life', note: 'A cheerful name for medicine. It is against the bacteria\'s life, to be fair.' },
+  antisocial:  { lit: 'against friends' },
+  monologue:   { lit: 'one speaking' },
+  dialogue:    { lit: 'speaking across' },
+  polygon:     { lit: 'many angles' },
+  semicircle:  { lit: 'half a circle' },
+  synonym:     { lit: 'same name' },
+  antonym:     { lit: 'against name' },
+  homonym:     { lit: 'same name' },
+  pseudonym:   { lit: 'false name', note: 'A fake name you write under. Mark Twain was one.' },
+  anonymous:   { lit: 'without a name' },
+  translucent: { lit: 'light through' },
+  aquatic:     { lit: 'to do with water' },
+  misinformation: { lit: 'wrongly shaped inward' },
+  hyperactive: { lit: 'over-doing' },
+};

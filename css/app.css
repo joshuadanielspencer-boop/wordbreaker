@@ -1,0 +1,373 @@
+/* WORDBREAKER
+   The visual language is fixed and must not drift between sessions:
+     violet = prefix    amber = root    teal = suffix
+   Color carries STRUCTURE. Bold carries ATTENTION. Underline carries the
+   CURRENT TARGET. Everything else stays quiet so the word is always the
+   dominant object on screen. */
+
+:root {
+  --bg: #f7f5f2;
+  --surface: #ffffff;
+  --surface-2: #efece7;
+  --ink: #1c1a17;
+  --ink-dim: #6b655d;
+  --line: #ddd8d0;
+
+  --prefix: #7c4dbd;
+  --prefix-bg: #efe6fb;
+  --root: #b56414;
+  --root-bg: #fdeed8;
+  --suffix: #0f7a72;
+  --suffix-bg: #d9f2ef;
+
+  --good: #1d7a3f;
+  --gentle: #8a6a1f;
+  --accent: #1c1a17;
+  --accent-ink: #fdfcfa;
+
+  --r: 14px;
+  --font: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16151a;
+    --surface: #1f1e25;
+    --surface-2: #2a2833;
+    --ink: #f2efe9;
+    --ink-dim: #a09aa8;
+    --line: #38353f;
+
+    --prefix: #c4a2ff;  --prefix-bg: #322a45;
+    --root:   #ffb865;  --root-bg:   #45331d;
+    --suffix: #5fded0;  --suffix-bg: #17423e;
+
+    --good: #6ee08b;
+    --gentle: #f0c96a;
+    --accent: #f2efe9;
+    --accent-ink: #16151a;
+  }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+#app { max-width: 780px; margin: 0 auto; padding: 20px 16px 64px; }
+
+/* ---------- chrome ---------- */
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px; min-height: 44px;
+}
+.brand { font-weight: 800; letter-spacing: -0.02em; font-size: 20px; }
+.topbar .spacer { flex: 1; }
+.pill {
+  font-size: 13px; color: var(--ink-dim);
+  background: var(--surface-2); padding: 6px 12px; border-radius: 999px;
+}
+
+.btn {
+  font: inherit; font-weight: 700; cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+  padding: 14px 22px; border-radius: var(--r); min-height: 48px;
+  transition: transform .06s ease, background .15s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.ghost { background: transparent; }
+.btn.big { font-size: 20px; padding: 20px 32px; width: 100%; }
+.btn:disabled { opacity: .45; cursor: default; }
+
+/* ---------- word stage ---------- */
+.prompt { color: var(--ink-dim); font-size: 15px; margin: 0 0 18px; }
+
+.wordstage {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 0; min-height: 140px; padding: 22px 8px;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 20px;
+  user-select: none;
+}
+.ltr { font-size: clamp(30px, 8vw, 46px); font-weight: 700; letter-spacing: -0.01em; }
+
+/* Generous touch target, quiet appearance. */
+.gap {
+  position: relative; width: 16px; align-self: stretch; min-height: 56px;
+  border: 0; background: transparent; padding: 0; cursor: pointer;
+}
+.gap::before {
+  content: ""; position: absolute; left: 50%; top: 14%; bottom: 14%;
+  width: 3px; transform: translateX(-50%); border-radius: 2px;
+  background: var(--line); opacity: .35; transition: opacity .12s, background .12s;
+}
+.gap:hover::before { opacity: .7; }
+.gap.cut::before { background: var(--ink); opacity: 1; }
+.gap.wrong::before { background: var(--gentle); opacity: 1; }
+
+.wordstage.revealed { gap: 6px; }
+
+/* ---------- morpheme chips: the fixed color language ---------- */
+.part, .eq-term {
+  display: inline-flex; flex-direction: column; align-items: center;
+  padding: 10px 14px; border-radius: 12px; min-width: 64px;
+}
+.part-text, .eq-surface { font-size: clamp(24px, 6vw, 34px); font-weight: 800; }
+.part-gloss, .eq-gloss {
+  font-size: 12px; font-weight: 600; opacity: .85; margin-top: 3px; text-align: center;
+}
+.part-origin { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; opacity: .55; margin-top: 3px; }
+
+.prefix { background: var(--prefix-bg); color: var(--prefix); }
+.root   { background: var(--root-bg);   color: var(--root); }
+.suffix { background: var(--suffix-bg); color: var(--suffix); }
+
+.joiner { font-size: 24px; font-weight: 700; color: var(--ink-dim); padding: 0 4px; }
+
+/* ---------- equation ---------- */
+.equation {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 4px; padding: 22px 8px; background: var(--surface);
+  border: 1.5px solid var(--line); border-radius: 20px; min-height: 120px;
+}
+.eq-term.unknown { background: var(--surface-2); color: var(--ink-dim); }
+.eq-term.unknown.solved { background: var(--root-bg); color: var(--root); }
+.eq-term.unknown.shown  { background: var(--surface-2); color: var(--ink); }
+
+.answer {
+  display: block; width: 100%; margin-top: 16px; font: inherit;
+  font-size: 26px; font-weight: 700; text-align: center; padding: 16px;
+  border: 2px solid var(--line); border-radius: var(--r);
+  background: var(--surface); color: var(--ink);
+}
+.answer:focus { outline: none; border-color: var(--accent); }
+
+/* ---------- feedback ---------- */
+.actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
+.feedback { min-height: 56px; margin-top: 14px; text-align: center; }
+.msg { margin: 6px 0; font-size: 16px; font-weight: 600; white-space: pre-line; line-height: 1.45; }
+.msg.good { color: var(--good); }
+.msg.gentle { color: var(--gentle); }
+.msg.plainmsg { color: var(--ink-dim); }
+
+/* ---------- progress ---------- */
+.progress { display: flex; gap: 4px; margin-bottom: 20px; }
+.progress i {
+  flex: 1; height: 5px; border-radius: 3px; background: var(--surface-2);
+}
+.progress i.done { background: var(--good); }
+.progress i.miss { background: var(--gentle); }
+.progress i.now  { background: var(--ink); }
+
+/* ---------- home ---------- */
+.hero { text-align: center; padding: 28px 0 34px; }
+.hero h1 { font-size: clamp(38px, 12vw, 62px); margin: 0 0 6px; letter-spacing: -0.04em; font-weight: 800; }
+.hero p { color: var(--ink-dim); margin: 0; font-size: 16px; }
+.homegrid { display: grid; gap: 10px; margin-top: 22px; }
+.stats { display: flex; gap: 8px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
+.stat {
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r);
+  padding: 12px 16px; text-align: center; flex: 1 1 100px;
+}
+.stat b { display: block; font-size: 24px; }
+.stat span { font-size: 12px; color: var(--ink-dim); }
+
+/* ---------- codex ---------- */
+.codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.card {
+  background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: var(--r); padding: 14px; cursor: pointer; text-align: left;
+  font: inherit; color: inherit;
+}
+.card.locked { opacity: .38; }
+.card b { display: block; font-size: 22px; font-weight: 800; }
+.card .gloss { font-size: 12px; color: var(--ink-dim); display: block; margin-top: 4px; }
+.card .bar { display: block; height: 4px; border-radius: 2px; background: var(--surface-2); margin-top: 10px; }
+.card .bar i { display: block; height: 100%; border-radius: 2px; background: var(--good); }
+.card.prefix b { color: var(--prefix); }
+.card.root b   { color: var(--root); }
+.card.suffix b { color: var(--suffix); }
+
+.section-title { font-size: 13px; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--ink-dim); margin: 26px 0 10px; font-weight: 700; }
+.family { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.family span { background: var(--surface-2); padding: 5px 10px; border-radius: 8px; font-size: 14px; }
+
+/* ---------- error clarity ----------
+   A wrong answer must SHOW why, not just be tinted a warning colour. The
+   comparison rows are the explanation; the message underneath stays gentle. */
+:root { --bad: #c0392b; --bad-bg: #fbe7e4; --lock: #b9b2a8; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bad: #ff8a7a; --bad-bg: #43221f; --lock: #5a5566; }
+}
+
+.compare { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.cmp-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 14px; border-radius: 12px;
+}
+.cmp-row.wrong { background: var(--bad-bg); border: 1.5px solid var(--bad); }
+.cmp-row.right { background: transparent; }
+.cmp-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .1em;
+  font-weight: 800; opacity: .8; min-width: 74px;
+}
+.cmp-row.wrong .cmp-label { color: var(--bad); }
+.cmp-row.right .cmp-label { color: var(--ink-dim); }
+.cmp-word { display: inline-flex; align-items: center; font-size: clamp(22px, 5.5vw, 32px); font-weight: 700; }
+.cmp-word b { font-weight: 700; }
+.cmp-word b.bad { color: var(--bad); text-decoration: underline wavy var(--bad) 2px; }
+.cmp-word b.missing { opacity: .5; text-decoration: none; }
+.cmp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+.cut { display: inline-block; width: 14px; text-align: center; font-style: normal; font-weight: 800; }
+.cut.ok::before { content: "|"; color: var(--good); }
+.cut.bad { color: var(--bad); font-size: 0.7em; vertical-align: middle; }
+.cut.missed { color: var(--bad); font-size: 0.8em; }
+
+.msg.reason { color: var(--ink); font-weight: 600; font-size: 15px; }
+.msg.reason b { color: var(--bad); font-weight: 800; }
+
+/* Locked-in: once revealed, the stage is visibly no longer editable. */
+.wordstage.revealed { background: var(--surface-2); border-style: solid; }
+
+/* ---------- word detective ---------- */
+.casefile {
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 20px;
+  padding: 22px 14px; text-align: center;
+}
+.suspect { font-size: clamp(28px, 7.5vw, 44px); font-weight: 800; letter-spacing: -0.02em; }
+.evidence {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 6px; margin-top: 16px; padding-top: 16px; border-top: 1.5px dashed var(--line);
+}
+.options { display: grid; gap: 8px; margin-top: 16px; }
+.opt {
+  font: inherit; font-size: 17px; font-weight: 600; text-align: left; cursor: pointer;
+  padding: 16px 18px; min-height: 54px; border-radius: var(--r);
+  border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+}
+.opt:active { transform: translateY(1px); }
+.opt:disabled { cursor: default; }
+.opt.right { border-color: var(--good); background: var(--good); color: var(--accent-ink); font-weight: 800; }
+.opt.chosen-wrong { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); text-decoration: line-through; }
+.opt.dimmed { opacity: .4; }
+.litline { font-size: 18px; font-weight: 700; margin: 14px 0 6px; }
+.story {
+  font-size: 15px; line-height: 1.55; color: var(--ink-dim); text-align: left;
+  background: var(--surface-2); padding: 14px 16px; border-radius: 12px; margin: 8px 0 0;
+}
+
+/* ---------- profiles ---------- */
+.profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.profile {
+  font: inherit; color: inherit; cursor: pointer; text-align: center;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 20px;
+  padding: 22px 12px; min-height: 132px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+}
+.profile:active { transform: translateY(1px); }
+.profile b { font-size: 19px; }
+.profile.add { border-style: dashed; color: var(--ink-dim); }
+.pface { font-size: 40px; line-height: 1; }
+.pface.small { font-size: 20px; }
+.psub { font-size: 12px; color: var(--ink-dim); }
+.btn.who { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; min-height: 44px; }
+
+.avatars { display: flex; flex-wrap: wrap; gap: 8px; }
+.av {
+  font-size: 28px; line-height: 1; cursor: pointer; padding: 10px;
+  min-width: 54px; min-height: 54px;
+  background: var(--surface); border: 2px solid var(--line); border-radius: 14px;
+}
+.av.on { border-color: var(--accent); background: var(--surface-2); }
+
+.manage-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: var(--r); padding: 12px 14px; margin-bottom: 8px;
+}
+.manage-row .spacer { flex: 1; }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+
+/* ---------- rewards ----------
+   Deliberately loud. It is meant to feel like the machine has malfunctioned
+   in your favour. */
+.reward {
+  margin: 16px auto 0; max-width: 520px; text-align: left;
+  background: var(--surface-2); border: 2px dashed var(--root);
+  border-radius: 14px; padding: 16px 18px;
+  font-family: var(--mono); font-size: 14px; line-height: 1.55;
+  white-space: pre-line; color: var(--ink);
+  animation: rewardin .28s cubic-bezier(.2,.9,.3,1.4);
+}
+@keyframes rewardin { from { transform: scale(.9) rotate(-1deg); opacity: 0; } }
+
+.msg.shout {
+  white-space: pre-line; font-family: var(--mono); font-weight: 700;
+  color: var(--root); font-size: 15px; line-height: 1.6;
+}
+
+/* The viewer's theme has three states. The bare :root above is the complete
+   light palette; the media queries cover an un-stamped document following the
+   OS; this block covers an explicit dark choice stamped on the root element.
+   Tokens only — never style a component from inside a theme block. */
+:root[data-theme="dark"] {
+--bg: #16151a;
+    --surface: #1f1e25;
+    --surface-2: #2a2833;
+    --ink: #f2efe9;
+    --ink-dim: #a09aa8;
+    --line: #38353f;
+
+    --prefix: #c4a2ff;  --prefix-bg: #322a45;
+    --root:   #ffb865;  --root-bg:   #45331d;
+    --suffix: #5fded0;  --suffix-bg: #17423e;
+
+    --good: #6ee08b;
+    --gentle: #f0c96a;
+    --accent: #f2efe9;
+    --accent-ink: #16151a;
+--bad: #ff8a7a; --bad-bg: #43221f; --lock: #5a5566;
+}
+
+/* ---------- the word that does not exist ---------- */
+.casefile.fake { position: relative; border-style: dashed; }
+.stamp {
+  position: absolute; top: 10px; right: 12px;
+  font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--bad); border: 1.5px solid var(--bad); border-radius: 6px;
+  padding: 4px 8px; transform: rotate(-3deg); opacity: .85;
+}
+.opt.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.link { font-weight: 700; padding: 4px 10px; border-radius: 8px; font-size: 15px; }
+.link.prefix { background: var(--prefix-bg); color: var(--prefix); }
+.link.root   { background: var(--root-bg);   color: var(--root); }
+.link.suffix { background: var(--suffix-bg); color: var(--suffix); }
+.linkjoin { color: var(--ink-dim); font-weight: 700; }
+.opt.right .link, .opt.chosen-wrong .link { filter: none; }
+.cmp-chips.built { justify-content: center; margin-top: 14px; }
+
+/* ---------- hard word radar ---------- */
+.passage {
+  width: 100%; font: inherit; font-size: 16px; line-height: 1.5; padding: 14px;
+  border: 1.5px solid var(--line); border-radius: var(--r);
+  background: var(--surface); color: var(--ink); resize: vertical;
+}
+.passage:focus { outline: none; border-color: var(--accent); }
+.radar-list { display: flex; flex-direction: column; gap: 8px; }
+.radar-row {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: var(--r); padding: 12px 14px;
+}
+.radar-row > b { font-size: 19px; min-width: 150px; }
+.radar-parts { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.radar-gloss { font-size: 12px; color: var(--ink-dim); flex-basis: 100%; }
