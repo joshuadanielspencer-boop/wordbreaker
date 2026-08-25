@@ -21,9 +21,11 @@ export function mount(el, word, opts = {}) {
           <button class="btn ghost" data-act="hint">Hint</button>
           <button class="btn primary" data-act="go">Dissect</button>
         </div>
+        <p class="keyhint"><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>space</kbd> cut &nbsp; <kbd>enter</kbd> dissect</p>
       </div>`;
 
     const stage = el.querySelector('.wordstage');
+    let cursor = 0;                      // which gap the keyboard is on
     const feedback = el.querySelector('.feedback');
     const letters = [...word.text];
 
@@ -46,6 +48,29 @@ export function mount(el, word, opts = {}) {
       }
     });
 
+    const gaps = [...stage.querySelectorAll('.gap')];
+
+    function moveCursor(to) {
+      if (!gaps.length) return;
+      cursor = Math.max(0, Math.min(gaps.length - 1, to));
+      gaps.forEach((g, i) => g.classList.toggle('at', i === cursor));
+    }
+    moveCursor(0);
+
+    // Desktop is the only target, so the whole activity is drivable from the
+    // keyboard: arrows to move, space to cut, enter to submit. In a fluency
+    // round this is several times faster than aiming at 3px-wide seams.
+    function onKey(e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'ArrowRight') { moveCursor(cursor + 1); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { moveCursor(cursor - 1); e.preventDefault(); }
+      else if (e.key === ' ') { gaps[cursor]?.click(); e.preventDefault(); }
+      else if (e.key === 'Enter') { check(); e.preventDefault(); }
+      else if (e.key === '?') { el.querySelector('[data-act="hint"]')?.click(); }
+    }
+    window.addEventListener('keydown', onKey);
+    const releaseKeys = () => window.removeEventListener('keydown', onKey);
+
     el.querySelector('[data-act="hint"]').addEventListener('click', () => {
       const sib = word.parts
         .map(p => MORPH[p.m].family.find(f => f !== word.text))
@@ -57,6 +82,7 @@ export function mount(el, word, opts = {}) {
     el.querySelector('[data-act="go"]').addEventListener('click', check);
 
     function check() {
+      if (!el.isConnected) return releaseKeys();
       attempts++;
       const ms = performance.now() - started;
       const want = new Set(word.cuts);
@@ -81,6 +107,7 @@ export function mount(el, word, opts = {}) {
         return;                       // one free retry before it counts
       }
 
+      releaseKeys();
       reveal(exact);
       resolve({ correct: exact, ms, credit, detail: { cuts: [...cuts], attempts } });
     }

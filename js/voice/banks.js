@@ -377,6 +377,73 @@ export const BANKS = {
     ],
   },
 
+  middleOpen: {
+    plain: ['Now you can have the answer.', 'Add them up.'],
+    flavor: [
+      'The pieces are done. Now the total.',
+      'That is the part that actually took effort. The rest is addition.',
+    ],
+    joke: [
+      'You may now write down the number you worked out about nine seconds ago.',
+      'Fine. The answer is unlocked. I hope it was worth all this.',
+    ],
+    absurd: [],
+  },
+
+  middleRight: {
+    plain: ['{total}. Correct.', 'Right — {total}.', 'Clean.'],
+    flavor: [
+      '{total}, and you showed every piece. That is the whole exercise.',
+      'Correct. Same trick as the words: break it up, deal with the pieces.',
+    ],
+    joke: [
+      'Correct. I know you had the answer immediately. I did not want the answer.',
+      '{total}. Written down, in public, where everyone can see it. Revolutionary.',
+      'Correct, and I have proof of how you got there, which is new and slightly unsettling.',
+    ],
+    absurd: [
+      'CORRECT.\nThe working has been recorded.\nIt cannot be un-recorded.',
+    ],
+  },
+
+  middleDone: {
+    plain: ['{total}. Got there.'],
+    flavor: [
+      '{total} — and the pieces that went wrong are the useful part.',
+      'Right in the end. The middle is where the information is.',
+    ],
+  },
+
+  // Mistakes: plain and flavor only, same rule as everywhere else.
+  middleWrong: {
+    plain: ['Not that one. Check {label} again.', 'Try {label} once more.'],
+    flavor: [
+      'Not yet — {label} on its own.',
+      'That piece is off. Just {label}, nothing else.',
+    ],
+  },
+
+  middleAddUp: {
+    plain: ['The pieces are right. The total is not — add them again.'],
+    flavor: [
+      'Every piece above is correct, so the answer is just those added up.',
+      'The hard part is done and right. This is addition.',
+    ],
+  },
+
+  mathOpen: {
+    plain: ['Numbers today.', 'Same idea, different subject.'],
+    flavor: [
+      'Same trick as the words. Break it into pieces, deal with the pieces.',
+      'I do not care what the answer is. I care what you did on the way there.',
+    ],
+    joke: [
+      'You can do these in your head. I know. That is precisely the problem.',
+      'Today the words get a rest and the numbers get taken apart instead.',
+    ],
+    absurd: [],
+  },
+
   boringOpen: {
     plain: ['Words you already know. Again.', 'Round of familiar ones.'],
     flavor: [
@@ -411,5 +478,5 @@ export const BANKS = {
 // escalate past `flavor`, whatever the personality setting says.
 export const GENTLE_CONTEXTS = new Set([
   'error', 'errorAutopsy', 'errorEquation', 'errorRepeat', 'hint',
-  'detectiveWrong', 'inventWrong',
+  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp',
 ]);

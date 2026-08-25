@@ -42,6 +42,35 @@ function migrate(oldState) {
   return p;
 }
 
+/**
+ * Ask the browser to keep this data. Safari evicts script-writable storage
+ * after seven days without a visit — on macOS as well as iOS — which would
+ * quietly erase months of progress. Chrome grants persistence based on
+ * engagement; Safari ignores the request, so the export nudge below is the
+ * real backstop there.
+ */
+export async function requestPersistence() {
+  try {
+    if (!navigator.storage?.persist) return null;
+    if (await navigator.storage.persisted?.()) return true;
+    return await navigator.storage.persist();
+  } catch { return null; }
+}
+
+/** Sessions since the last export. Drives the periodic backup nudge. */
+export function sessionsSinceBackup() {
+  const p = load();
+  if (!p) return 0;
+  return p.sessions.length - (p.lastBackupAt || 0);
+}
+
+export function markBackedUp() {
+  const p = load();
+  if (!p) return;
+  p.lastBackupAt = p.sessions.length;
+  flush();
+}
+
 export function loadRoot() {
   if (root) return root;
   try {

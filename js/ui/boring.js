@@ -5,13 +5,14 @@
 // reward for working on a word is that the word becomes dull and goes away.
 
 import { MORPH } from '../content/lexicon.js';
-import { boringItems, nearlyBoring, fluencySummary } from '../core/fluency.js';
+import { boringItems, nearlyBoring, dueForRecheck, practiceQueue, fluencySummary } from '../core/fluency.js';
 
 export function renderBoring(app, { onBack, onStart }) {
   window.scrollTo(0, 0);
   const stats = fluencySummary();
   const retired = boringItems();
-  const ready = nearlyBoring(12);
+  const rechecks = dueForRecheck();
+  const ready = practiceQueue(12);
 
   app.innerHTML = `
     <div class="topbar">
@@ -26,12 +27,18 @@ export function renderBoring(app, { onBack, onStart }) {
         : 'These are words you have met before. Do them until they stop being interesting. That is the whole goal.'}</p>
     </div>
 
+    ${rechecks.length ? `
+      <div class="section-title">due for a re-check — ${rechecks.length}</div>
+      <p class="msg plainmsg" style="text-align:left">You have not touched these in a few weeks.
+      If they are still boring they stay retired. If they are not, they come back.</p>
+      <div class="family">${rechecks.map(i => `<span>${i.text}</span>`).join('')}</div>` : ''}
+
     ${ready.length ? `
       <div class="section-title">closest to boring</div>
       <div class="boring-list">${ready.slice(0, 8).map(i => `
-        <div class="boring-row">
+        <div class="boring-row${i.recheck ? ' recheck' : ''}">
           <b>${i.text}</b>
-          <span class="boring-meta">seen ${i.n}× over ${i.dayCount} day${i.dayCount === 1 ? '' : 's'}</span>
+          <span class="boring-meta">${i.recheck ? 're-check' : `seen ${i.n}× over ${i.dayCount} day${i.dayCount === 1 ? '' : 's'}`}</span>
           <span class="boring-bar"><i style="width:${Math.round(i.progress * 100)}%"></i></span>
         </div>`).join('')}</div>
       <div class="homegrid" style="margin-top:16px">

@@ -21,6 +21,7 @@ const MIN_DAYS = 3;          // spacing matters more than volume
 const SPEEDUP = 0.65;        // must reach 65% of his own starting time
 const FLOOR_MS = 3500;       // or simply be fast outright
 const STREAK = 3;
+const RECHECK_DAYS = 21;     // automaticity decays; retirement is not forever
 
 const dayOf = t => new Date(t).toISOString().slice(0, 10);
 const median = xs => {
@@ -68,6 +69,30 @@ export function itemStats(activity = 'autopsy') {
   return out;
 }
 
+/**
+ * Retired words that have not been touched in weeks. Automaticity decays, so a
+ * shelf that only ever grows is a claim that stops being true.
+ *
+ * Un-retiring needs no special case: `boring` is recomputed from the whole
+ * attempt history, so if he is slow on the recheck the median of his last
+ * three rises and the word simply stops qualifying.
+ */
+export function dueForRecheck() {
+  const now = Date.now();
+  return [...itemStats().values()]
+    .filter(i => i.boring && (now - i.attempts[i.attempts.length - 1].t) / 86400000 >= RECHECK_DAYS)
+    .map(i => ({ ...i, recheck: true }))
+    .sort((a, b) => a.attempts[a.attempts.length - 1].t - b.attempts[b.attempts.length - 1].t);
+}
+
+/** What a fluency round should actually contain: rechecks first, then the
+ *  words closest to retiring. */
+export function practiceQueue(limit = 12) {
+  const rechecks = dueForRecheck();
+  const near = nearlyBoring(limit);
+  return [...rechecks, ...near].slice(0, limit);
+}
+
 export function boringItems() {
   return [...itemStats().values()].filter(i => i.boring)
     .sort((a, b) => a.text.localeCompare(b.text));
@@ -92,6 +117,15 @@ export function fluencySummary() {
     seen: all.length,
     retired: retired.length,
     ready: all.filter(i => !i.boring && i.n >= 1).length,
+    recheck: dueForRecheck().length,
     medianSpeedup: speedups.length ? median(speedups) : null,
   };
+}
+
+/** His typical time for an activity, for judging whether an answer was fast. */
+export function typicalMs(activity = 'autopsy') {
+  const S = load();
+  if (!S) return null;
+  const xs = S.log.filter(r => r.activity === activity && r.correct && r.ms > 0).map(r => r.ms);
+  return xs.length >= 5 ? median(xs) : null;
 }

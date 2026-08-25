@@ -104,6 +104,12 @@ export function planSession({ items = 14, maxLevel = 5 } = {}) {
 
   const bigPool = WORD_LIST.filter(w => w.level >= 4 && !used.has(w.id));
   const stretch = shuffle(bigPool).slice(0, 2);
+  stretch.forEach(w => used.add(w.id));
+
+  // A session must not END on its two hardest words. The stretch block is the
+  // right place to be stretched and the wrong place to finish, so one easy
+  // item follows it — the last thing he does should be something he lands.
+  const cool = shuffle(scored.filter(x => x.w.level === 2 && !used.has(x.w.id))).slice(0, 1);
 
   const seq = [
     ...warmup.map(x => ({ word: x.w, activity: 'autopsy', phase: 'warmup' })),
@@ -113,6 +119,7 @@ export function planSession({ items = 14, maxLevel = 5 } = {}) {
       phase: 'main',
     })),
     ...stretch.map(w => ({ word: w, activity: 'autopsy', phase: 'stretch' })),
+    ...cool.map(x => ({ word: x.w, activity: 'autopsy', phase: 'cooldown' })),
   ];
 
   // Detective needs a word with a hand-written note, and the main block tends
@@ -147,4 +154,42 @@ export function planSession({ items = 14, maxLevel = 5 } = {}) {
   }
 
   return { targets, seq };
+}
+
+// ---------------------------------------------------------- mid-session moves
+// The plan is not fixed once a session starts. A run of misses should shorten
+// it, and a recurring failure should visibly redirect it.
+
+const easyPool = () => WORD_LIST.filter(w => w.level === 2);
+
+/** One item he is very likely to land. Used to avoid ending on a failure. */
+export function recoveryItem(exclude = new Set()) {
+  const pool = easyPool().filter(w => !exclude.has(w.text));
+  const known = pool.filter(w => w.morphemes.every(id => level(id) >= LEVEL.SOLID));
+  const from = known.length ? known : pool;
+  if (!from.length) return null;
+  return { word: from[Math.floor(Math.random() * from.length)], activity: 'autopsy', phase: 'recovery' };
+}
+
+/**
+ * Extra practice aimed at one morpheme. This is what makes the "we have found
+ * your nemesis" message TRUE rather than just a line of dialogue — the
+ * curriculum actually bends toward the thing that keeps going wrong.
+ */
+export function itemsForMorpheme(id, n = 2, exclude = new Set()) {
+  const pool = WORD_LIST
+    .filter(w => w.morphemes.includes(id) && !exclude.has(w.text))
+    .sort((a, b) => a.level - b.level);          // easiest first: rebuild, don't punish
+  return pool.slice(0, n).map(w => ({ word: w, activity: 'autopsy', phase: 'nemesis' }));
+}
+
+/** A few more of what he is already doing well, for a run that is going well. */
+export function encoreItems(targets, n = 4, exclude = new Set()) {
+  const history = itemHistory();
+  return WORD_LIST
+    .map(w => ({ w, s: scoreWord(w, targets, history, 4) }))
+    .filter(x => x.s > 0 && !exclude.has(x.w.text))
+    .sort((a, b) => b.s - a.s)
+    .slice(0, n)
+    .map(x => ({ word: x.w, activity: 'autopsy', phase: 'encore' }));
 }

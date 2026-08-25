@@ -1,10 +1,10 @@
 import {
   load, loadRoot, save, flush, today, profiles, createProfile, switchProfile,
   signOut, deleteProfile, renameProfile, exportProfile, importProfile,
-  resetProfile, AVATARS,
+  resetProfile, requestPersistence, sessionsSinceBackup, markBackedUp, AVATARS,
 } from './core/store.js';
-import { planSession } from './core/scheduler.js';
-import { record, level, LEVEL, LEVEL_NAME, weakest } from './core/mastery.js';
+import { planSession, recoveryItem, itemsForMorpheme, encoreItems } from './core/scheduler.js';
+import { record, level, LEVEL, LEVEL_NAME, weakest, entry as mastEntry } from './core/mastery.js';
 import { push as logPush } from './core/log.js';
 import { MORPH, collectableMorphemes, drillableMorphemes, originLabel } from './content/lexicon.js';
 import { say, reward } from './voice/voice.js';
@@ -12,12 +12,14 @@ import { mount as autopsy } from './activities/autopsy.js';
 import { mount as equation } from './activities/equation.js';
 import { mount as detective } from './activities/detective.js';
 import { mount as invent } from './activities/invent.js';
+import { mount as middle } from './activities/middle.js';
+import { makeProblem, pickSkill, SKILLS, LADDER } from './content/math.js';
 import { renderCodex } from './ui/codex.js';
 import { renderRadar } from './ui/radar.js';
 import { renderBoring } from './ui/boring.js';
-import { boringItems, fluencySummary } from './core/fluency.js';
+import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
-const ACTIVITIES = { autopsy, equation, detective, invent };
+const ACTIVITIES = { autopsy, equation, detective, invent, middle };
 const PERSONALITIES = ['normal', 'funny', 'ridiculous', 'unsupervised'];
 const app = document.getElementById('app');
 
@@ -120,6 +122,7 @@ function manageProfiles() {
 // embedded viewers block it outright — the click silently does nothing. Ask
 // the host for a save channel first and only fall back to the anchor.
 async function download(text, tag) {
+  markBackedUp();
   const filename = `wordbreaker-${tag}-${today()}.json`;
 
   const host = globalThis.claude;
@@ -187,6 +190,7 @@ function home() {
       <button class="btn big" data-act="codex">Codex &nbsp;·&nbsp; ${met}/${teach.length}</button>
       <button class="btn big" data-act="radar">Hard Word Radar</button>
       <button class="btn big" data-act="boring">Make it Boring &nbsp;·&nbsp; ${fluencySummary().retired} retired</button>
+      <button class="btn big" data-act="math">Show the Middle &nbsp;·&nbsp; numbers</button>
     </div>
     <div class="stats">
       <div class="stat"><b>${S.sessions.length}</b><span>sessions</span></div>
@@ -196,16 +200,24 @@ function home() {
     <div class="stats" style="margin-top:10px">
       <button class="btn ghost" data-act="personality">Computer: ${S.settings.personality}</button>
       <button class="btn ghost" data-act="parent">Progress</button>
-    </div>`;
+    </div>
+    ${sessionsSinceBackup() >= 10 ? `
+      <p class="msg plainmsg backup-nudge">${S.sessions.length} sessions and no backup.
+      Browsers do throw this kind of data away.
+      <button class="btn ghost" data-act="backup">Save a copy</button></p>` : ''}`;
 
   app.querySelector('[data-act="start"]').onclick = () => runSession();
   app.querySelector('[data-act="codex"]').onclick = () => renderCodex(app, { onBack: home });
   app.querySelector('[data-act="parent"]').onclick = parentView;
+  const backup = app.querySelector('[data-act="backup"]');
+  if (backup) backup.onclick = () => download(exportProfile(), S.name).then(home);
+  app.querySelector('[data-act="math"]').onclick = runMath;
   app.querySelector('[data-act="boring"]').onclick = () => renderBoring(app, {
     onBack: home,
     onStart: items => runSession({
       mode: 'boring',
       before: boringItems().map(i => i.text),
+      opener: 'boringOpen',
       targets: [...new Set(items.flatMap(i => i.word.morphemes))],
       seq: items.map(i => ({ word: i.word, activity: 'autopsy', phase: 'boring' })),
     }),
@@ -245,8 +257,19 @@ async function runSession(customPlan) {
   const newlyMet = [];
   let aborted = false;
 
-  for (let i = 0; i < plan.seq.length; i++) {
-    const step = plan.seq[i];
+  // The plan adapts as it runs, so the queue is mutable and the fixed-length
+  // loop is not.
+  const queue = [...plan.seq];
+  const seenText = new Set(queue.map(s => s.word.text));
+  const morphemeMisses = {};      // this session only
+  const nemesisFired = new Set();
+  let recoveriesAdded = 0;
+  let woundDown = false;
+  let extended = false;
+  const fastThreshold = (typicalMs('autopsy') || 0) * 0.6;
+
+  for (let i = 0; i < queue.length; i++) {
+    const step = queue[i];
     if (!step.word.pseudo) {
       for (const id of step.word.morphemes) {
         if (level(id) === LEVEL.UNSEEN && !newlyMet.includes(id)) newlyMet.push(id);
@@ -257,9 +280,9 @@ async function runSession(customPlan) {
       <div class="topbar">
         <button class="btn ghost" data-act="quit">Stop</button>
         <div class="spacer"></div>
-        <span class="pill">${i + 1} / ${plan.seq.length}</span>
+        <span class="pill">${i + 1} / ${queue.length}</span>
       </div>
-      <div class="progress">${plan.seq.map((_, k) =>
+      <div class="progress">${queue.map((_, k) =>
         `<i class="${k < i ? (results[k] ? 'done' : 'miss') : k === i ? 'now' : ''}"></i>`).join('')}</div>
       <div id="stage"></div>`;
     app.querySelector('[data-act="quit"]').onclick = () => { aborted = true; finish(true); home(); };
@@ -277,14 +300,51 @@ async function runSession(customPlan) {
       ms: Math.round(res.ms), credit: res.credit, detail: res.detail, phase: step.phase,
     });
 
-    // Rewards ride on success only — never on an error path.
+    const note = line => {
+      const fb = app.querySelector('.feedback');
+      if (fb && line) fb.insertAdjacentHTML('beforeend', `<p class="msg plainmsg">${esc(line)}</p>`);
+    };
+
     if (res.correct) {
-      const r = reward(S, S.settings.personality);
+      if (fastThreshold && res.ms < fastThreshold) note(say('correctFast', {}, S.settings.personality));
+      const r = reward(S, S.settings.personality);   // success only, never an error path
       if (r) {
         save();
         const fb = app.querySelector('.feedback');
         if (fb) fb.insertAdjacentHTML('beforeend', `<div class="reward">${esc(r)}</div>`);
       }
+    } else {
+      // A morpheme missed repeatedly is worth naming — and worth acting on.
+      // Saying "we have found your nemesis" and then carrying on with the
+      // original plan would make the line a lie.
+      for (const [mid, ok] of Object.entries(res.credit)) {
+        if (ok) continue;
+        morphemeMisses[mid] = (morphemeMisses[mid] || 0) + 1;
+        if (morphemeMisses[mid] >= 2 && !nemesisFired.has(mid)) {
+          nemesisFired.add(mid);
+          note(say('errorRepeat', { morph: MORPH[mid].canonical }, S.settings.personality));
+          const extra = itemsForMorpheme(mid, 2, seenText);
+          extra.forEach(x => seenText.add(x.word.text));
+          queue.splice(i + 1, 0, ...extra);
+        }
+      }
+    }
+
+    if (i === 0 && plan.opener) note(say(plan.opener, {}, S.settings.personality));
+
+    // End of the warm-up block.
+    if (step.phase === 'warmup' && queue[i + 1] && queue[i + 1].phase !== 'warmup') {
+      note(say('blockEnd', { correct, total: i + 1 }, S.settings.personality));
+    }
+
+    // A bad run should shorten the session, not grind through it. Stopping
+    // early costs a few items; making it aversive costs the whole project.
+    const recent = results.slice(-4);
+    if (!woundDown && recent.length === 4 && recent.filter(Boolean).length <= 1) {
+      woundDown = true;
+      const rec = recoveryItem(seenText);
+      queue.length = i + 1;
+      if (rec) { seenText.add(rec.word.text); queue.push(rec); }
     }
 
     await new Promise(r => {
@@ -293,6 +353,27 @@ async function runSession(customPlan) {
       else setTimeout(r, 400);
     });
     if (aborted) return;
+
+    const last = i === queue.length - 1;
+
+    // Never finish on a miss.
+    if (last && !res.correct && recoveriesAdded < 2) {
+      const rec = recoveryItem(seenText);
+      if (rec) { seenText.add(rec.word.text); queue.push(rec); recoveriesAdded++; }
+    }
+
+    // Going well? Offer more — never impose it. Forcing extra work on a good
+    // run is a punishment for succeeding.
+    if (last && !woundDown && !extended && !customPlan
+        && results.length >= 8 && correct / results.length >= 0.85) {
+      extended = true;
+      const more = await offerEncore(S);
+      if (more) {
+        const extra = encoreItems(plan.targets, 4, seenText);
+        extra.forEach(x => seenText.add(x.word.text));
+        queue.push(...extra);
+      }
+    }
   }
 
   finish(false);
@@ -334,6 +415,11 @@ function summary(plan, correct, newlyMet) {
       <p class="msg plainmsg">${esc(say('retired', { n: retired.length, word: retired[0] }, S.settings.personality))}</p>` : ''}
     ${newlyMet.length ? `
       <div class="section-title">new to the codex</div>
+      <p class="msg plainmsg">${esc(say('newMorpheme', {
+        morph: MORPH[newlyMet[0]].canonical,
+        gloss: MORPH[newlyMet[0]].gloss,
+        origin: originLabel(MORPH[newlyMet[0]].origin),
+      }, S.settings.personality))}</p>
       <div class="codex-grid">${newlyMet.map(id => {
         const m = MORPH[id];
         return `<div class="card ${m.type}"><b>${m.canonical}</b>
@@ -347,6 +433,44 @@ function summary(plan, correct, newlyMet) {
       <button class="btn primary big" data-act="home">Done</button>
     </div>`;
   app.querySelector('[data-act="home"]').onclick = home;
+}
+
+/**
+ * The maths strand. Kept as its own session rather than mixed into the word
+ * sessions: different domain, different data, and mixing would muddle both.
+ * The connection is made in the voice instead — same trick, different subject.
+ */
+function runMath() {
+  const skill = pickSkill(id => level(id));
+  const seq = Array.from({ length: 8 }, () => {
+    const p = makeProblem(skill);
+    // Shaped like a word item so the session loop needs no special case.
+    p.id = 'm:' + p.prompt;
+    p.text = p.prompt;
+    p.morphemes = [];
+    p.level = p.steps.length;
+    return { word: p, activity: 'middle', phase: 'math' };
+  });
+  return runSession({ targets: [skill], seq, opener: 'mathOpen', math: true });
+}
+
+/** A yes/no interstitial. Resolves false if he just wants to be done. */
+function offerEncore(S) {
+  return new Promise(resolve => {
+    const stage = document.getElementById('stage');
+    if (!stage) return resolve(false);
+    stage.innerHTML = `
+      <div class="act">
+        <p class="prompt">You are on a run.</p>
+        <div class="casefile"><div class="suspect" style="font-size:26px">Four more?</div></div>
+        <div class="actions">
+          <button class="btn primary" data-act="more">Four more</button>
+          <button class="btn ghost" data-act="stop">That's enough</button>
+        </div>
+      </div>`;
+    stage.querySelector('[data-act="more"]').onclick = () => resolve(true);
+    stage.querySelector('[data-act="stop"]').onclick = () => resolve(false);
+  });
 }
 
 // ------------------------------------------------------------- parent view
@@ -372,6 +496,11 @@ function parentView() {
     ${sessions.length ? sessions.map(s =>
       `<p class="msg plainmsg" style="text-align:left">${new Date(s.started).toLocaleDateString()} — ${s.correct}/${s.items} · ${Math.round((s.ended - s.started) / 60000)} min</p>`).join('')
       : '<p class="msg plainmsg">No sessions yet.</p>'}
+    <div class="section-title">show the middle</div>
+    <div class="family">${LADDER.map(id => {
+      const e = mastEntry(id);
+      return `<span>${SKILLS[id].name}: ${e.n ? LEVEL_NAME[level(id)] + ` (n=${e.n})` : 'not tried'}</span>`;
+    }).join('')}</div>
     <div class="section-title">mastery spread</div>
     <div class="family">${[0, 1, 2, 3, 4].map(l =>
       `<span>${LEVEL_NAME[l]}: ${teach.filter(id => level(id) === l).length}</span>`).join('')}</div>`;
@@ -386,4 +515,5 @@ function parentView() {
 }
 
 loadRoot();
+requestPersistence();
 load() ? home() : picker();
