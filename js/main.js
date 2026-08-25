@@ -17,6 +17,8 @@ import { makeProblem, pickSkill, SKILLS, LADDER } from './content/math.js';
 import { renderCodex } from './ui/codex.js';
 import { renderRadar } from './ui/radar.js';
 import { renderBoring } from './ui/boring.js';
+import { renderChapter, renderLibrary, chapterOwed, gateWordFor, markUnlocked, unlockedCount } from './ui/story.js';
+import { CHAPTERS } from './content/story.js';
 import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
 const ACTIVITIES = { autopsy, equation, detective, invent, middle };
@@ -191,6 +193,7 @@ function home() {
       <button class="btn big" data-act="radar">Hard Word Radar</button>
       <button class="btn big" data-act="boring">Make it Boring &nbsp;·&nbsp; ${fluencySummary().retired} retired</button>
       <button class="btn big" data-act="math">Show the Middle &nbsp;·&nbsp; numbers</button>
+      <button class="btn big" data-act="story">The Expedition &nbsp;·&nbsp; ${unlockedCount()}/${CHAPTERS.length}</button>
     </div>
     <div class="stats">
       <div class="stat"><b>${S.sessions.length}</b><span>sessions</span></div>
@@ -212,6 +215,10 @@ function home() {
   const backup = app.querySelector('[data-act="backup"]');
   if (backup) backup.onclick = () => download(exportProfile(), S.name).then(home);
   app.querySelector('[data-act="math"]').onclick = runMath;
+  app.querySelector('[data-act="story"]').onclick = () => renderLibrary(app, {
+    onBack: home,
+    onRead: ch => renderChapter(app, ch, { onDone: home }),
+  });
   app.querySelector('[data-act="boring"]').onclick = () => renderBoring(app, {
     onBack: home,
     onStart: items => runSession({
@@ -394,6 +401,7 @@ async function runSession(customPlan) {
 function summary(plan, correct, newlyMet) {
   const S = load();
   toTop();
+  const owed = plan.math ? null : chapterOwed();
   const total = plan.seq.length;
   const ctx = correct === total ? 'perfect' : 'sessionEnd';
   const nowBoring = plan.targets.filter(id => level(id) === LEVEL.BORING);
@@ -429,10 +437,37 @@ function summary(plan, correct, newlyMet) {
       <div class="section-title">now boring</div>
       <p class="msg plainmsg">${nowBoring.map(id =>
         esc(say('boring', { morph: MORPH[id].canonical }, S.settings.personality))).join('\n')}</p>` : ''}
+    ${owed ? `
+      <div class="section-title">a chapter is available</div>
+      <p class="msg plainmsg">Chapter ${owed.index + 1} is behind a word. You know how this works.</p>` : ''}
     <div class="homegrid" style="margin-top:26px">
-      <button class="btn primary big" data-act="home">Done</button>
+      ${owed ? `<button class="btn primary big" data-act="unlock">Open chapter ${owed.index + 1}</button>` : ''}
+      <button class="btn ${owed ? '' : 'primary '}big" data-act="home">Done</button>
     </div>`;
   app.querySelector('[data-act="home"]').onclick = home;
+  const unlock = app.querySelector('[data-act="unlock"]');
+  if (unlock) unlock.onclick = () => openChapter(owed);
+}
+
+/** Break the gate word, get the chapter. The reward is made of the work. */
+async function openChapter(chapter) {
+  const S = load();
+  const word = gateWordFor(chapter);
+  app.innerHTML = `
+    <div class="topbar"><span class="brand">THE EXPEDITION</span></div>
+    <p class="prompt" style="text-align:center">Chapter ${chapter.index + 1} is locked. This is the lock.</p>
+    <div id="stage"></div>`;
+  await ACTIVITIES.autopsy(document.getElementById('stage'), word,
+    { personality: S.settings.personality });
+  // Opening is not conditional on getting it right first time — the chapter is
+  // the reward for the attempt, not a prize for accuracy.
+  await new Promise(r => {
+    const b = app.querySelector('[data-act="next"]');
+    if (b) { b.textContent = 'Open it'; b.addEventListener('click', r, { once: true }); }
+    else setTimeout(r, 400);
+  });
+  markUnlocked(chapter.index);
+  renderChapter(app, chapter, { onDone: home });
 }
 
 /**

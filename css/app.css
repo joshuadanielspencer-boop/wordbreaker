@@ -431,3 +431,23 @@ body {
 /* The total stays visibly shut until the middle is done. */
 .sum-row.total { opacity: .45; transition: opacity .2s; }
 .sum-row.total.open, .sum-row.total.done { opacity: 1; }
+
+/* ---------- the expedition ---------- */
+.chapter { max-width: 34em; margin: 0 auto; }
+.chapter-no {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .14em;
+  color: var(--ink-dim); font-weight: 700; margin: 0 0 6px;
+}
+.chapter h1 { font-size: clamp(26px, 5vw, 34px); margin: 0 0 20px; text-wrap: balance; }
+.chapter-body p { font-size: 17px; line-height: 1.65; margin: 0 0 1em; white-space: pre-line; }
+.chapter-list { display: flex; flex-direction: column; gap: 8px; }
+.chapter-row {
+  font: inherit; color: inherit; text-align: left; cursor: pointer;
+  display: flex; align-items: baseline; gap: 12px;
+  background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: var(--r); padding: 14px 16px;
+}
+.chapter-row .chapter-no { margin: 0; min-width: 1.5em; }
+.chapter-row b { flex: 1; font-size: 17px; }
+.chapter-gate { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); }
+.chapter-row.locked { cursor: default; opacity: .4; }

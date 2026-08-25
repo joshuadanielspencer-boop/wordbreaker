@@ -3,6 +3,7 @@
 import { MORPHEMES } from '../js/content/morphemes.js';
 import { WORD_SPECS, parseSpec } from '../js/content/words.js';
 import { NOTES } from '../js/content/notes.js';
+import { CHAPTERS } from '../js/content/story.js';
 import { DERIVED_LITS } from '../js/content/notes-derived.js';
 import { readFileSync, existsSync } from 'node:fs';
 
@@ -53,12 +54,23 @@ for (const key of Object.keys(NOTES)) {
   if (!NOTES[key].lit) errors.push(`NOTES "${key}" has no lit phrase`);
 }
 
+// A chapter gate must be a real, genuinely long word — the lock is the point.
+for (const c of CHAPTERS) {
+  const spec = seen.get(c.gate);
+  if (!spec) errors.push(`chapter "${c.title}": gate word "${c.gate}" is not in the corpus`);
+  else if (parseSpec(spec).parts.length < 3)
+    errors.push(`chapter "${c.title}": gate word "${c.gate}" has fewer than 3 pieces`);
+}
+const gates = CHAPTERS.map(c => c.gate);
+if (new Set(gates).size !== gates.length) errors.push('two chapters share a gate word');
+
 // Morphemes that no word exercises are dead weight in the Codex.
 const unused = Object.keys(MORPHEMES).filter(id => !observedForms.has(id));
 
 const withStory = Object.values(NOTES).filter(n => n.note).length;
 const totalNotes = new Set([...Object.keys(NOTES), ...Object.keys(DERIVED_LITS)]).size;
 console.log(`words: ${WORD_SPECS.length}   morphemes: ${Object.keys(MORPHEMES).length}`);
+console.log(`story: ${CHAPTERS.length} chapters, all gates verified`);
 console.log(`notes: ${totalNotes}/${WORD_SPECS.length} (${Object.keys(NOTES).length} hand-written, ${withStory} with stories, ${Object.keys(DERIVED_LITS).length} derived)`);
 if (lexicon) console.log(`lexicon: ${DICT} (${lexicon.size} entries)`);
 else console.log('lexicon: NOT FOUND — real-word check skipped');

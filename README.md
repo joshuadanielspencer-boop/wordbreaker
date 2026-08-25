@@ -108,6 +108,9 @@ js/activities/        autopsy.js, equation.js, detective.js, invent.js
 js/ui/radar.js        scan a real passage for words worth pre-teaching
 js/ui/boring.js       the fluency shelf
 js/core/fluency.js    per-item latency across days; retirement rules
+js/content/math.js    Show the Middle problem generation
+js/content/story.js   The Expedition — ten chapters
+js/ui/story.js        chapter unlock flow and library
 js/ui/codex.js        the collection he is building
 tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs,
                       gen-pseudo.mjs, gen-notes.mjs
@@ -225,6 +228,43 @@ Being accurate but still slow does not retire a word. That is the entire point.
 The timer is never shown; the only visible goal is that words become dull and
 go away.
 
+### Show the Middle — the maths strand
+
+Breaking `47` into `40` and `7` is the same move as breaking `transportation`
+into trans + port + ation, so it uses the same chips and the same colours on
+purpose. It is a separate session rather than mixed into the word sessions —
+different domain, different data — and the connection is made in the voice.
+
+The total field is **disabled** until every partial is correct. That is the
+whole activity. Merely *asking* someone to show their working is ignored by
+anyone who has spent four years not showing it; the answer has to be
+structurally unreachable until the middle is done.
+
+### The Expedition — the narrative hook
+
+Ten chapters, one per completed session, each locked behind a long word.
+Breaking the word is how the chapter opens, so the story and the mechanic are
+the same action rather than a reward bolted onto one another. Opening is not
+conditional on getting the word right first time — the chapter is the reward
+for the attempt, not a prize for accuracy.
+
+Gate words are validated by `tools/check.mjs`: each must exist in the corpus,
+have at least three pieces, and be unique across chapters.
+
+### Session shape
+
+Sessions used to end on their two hardest words, which is backwards for
+finishing on a high note, so a cooldown item now follows the stretch block.
+The plan also adapts as it runs:
+
+- a morpheme missed twice fires the "we have found your nemesis" message **and
+  injects easier words built on that morpheme.** Saying the plan has changed
+  while carrying on with the original plan would make the line a lie.
+- three misses in the last four winds the session down early onto a recovery
+  item. Stopping early costs a few items; making it aversive costs the project.
+- a session never finishes on a miss.
+- a run going well is *offered* four more, never given them.
+
 ## Deploying
 
 Pushing to `main` runs `.github/workflows/pages.yml`, which gates on
@@ -247,8 +287,9 @@ must never reach the deployed site.
   real-word exclusion and a profanity blocklist.
 - **Drawing and annotation**, saved into the Codex cards.
 - **The serialized story** — the actual retention mechanic.
-- **The math strand** — same "show the middle" mechanic on problems too big to
-  hold in his head, so he can see it as one habit rather than two subjects.
+- **More maths types** — order of operations and distributive shortcuts
+  (99 × 7 as 100 × 7 − 7). Only partial products are built.
+- **More chapters** — ten is about ten sessions of runway.
 - **More Detective notes.** 272 of 519 words now have one (212 hand-written,
   60 derived). The remaining gap is mostly `-able`/`-ible` adjectives, which
   need a past participle ("able to be seen") that cannot be composed
