@@ -27,7 +27,7 @@ export function mount(el, word, opts = {}) {
     const stage = el.querySelector('.wordstage');
     let cursor = 0;                      // which gap the keyboard is on
     const feedback = el.querySelector('.feedback');
-    const letters = [...word.text];
+    const letters = [...(word.display || word.text)];
 
     letters.forEach((ch, i) => {
       const s = document.createElement('span');
@@ -131,7 +131,7 @@ export function mount(el, word, opts = {}) {
       const yoursRow = correct ? '' : `
         <div class="cmp-row wrong">
           <span class="cmp-label">you cut</span>
-          <span class="cmp-word">${[...word.text].map((ch, i) => {
+          <span class="cmp-word">${[...(word.display || word.text)].map((ch, i) => {
             const at = i + 1;
             let mark = '';
             if (cuts.has(at) && !want.has(at)) mark = '<i class="cut bad" title="not a seam">✕</i>';

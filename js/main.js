@@ -13,15 +13,19 @@ import { mount as equation } from './activities/equation.js';
 import { mount as detective } from './activities/detective.js';
 import { mount as invent } from './activities/invent.js';
 import { mount as middle } from './activities/middle.js';
+import { mount as spell } from './activities/spell.js';
 import { makeProblem, pickSkill, SKILLS, LADDER } from './content/math.js';
 import { renderCodex } from './ui/codex.js';
 import { renderRadar } from './ui/radar.js';
 import { renderBoring } from './ui/boring.js';
 import { renderChapter, renderLibrary, chapterOwed, gateWordFor, markUnlocked, unlockedCount } from './ui/story.js';
 import { CHAPTERS } from './content/story.js';
+import { renderSlaughter } from './ui/slaughter.js';
+import { drillQueue, allMissions, missionProgress } from './core/mission.js';
+import { missionById } from './content/lexicon.js';
 import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
-const ACTIVITIES = { autopsy, equation, detective, invent, middle };
+const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell };
 const PERSONALITIES = ['normal', 'funny', 'ridiculous', 'unsupervised'];
 const app = document.getElementById('app');
 
@@ -194,6 +198,10 @@ function home() {
       <button class="btn big" data-act="boring">Make it Boring &nbsp;·&nbsp; ${fluencySummary().retired} retired</button>
       <button class="btn big" data-act="math">Show the Middle &nbsp;·&nbsp; numbers</button>
       <button class="btn big" data-act="story">The Expedition &nbsp;·&nbsp; ${unlockedCount()}/${CHAPTERS.length}</button>
+      <button class="btn big" data-act="slaughter">Spelling Slaughter &nbsp;·&nbsp; ${(() => {
+        const m = allMissions();
+        return `${m.reduce((a, x) => a + x.done, 0)}/${m.reduce((a, x) => a + x.total, 0)}`;
+      })()}</button>
     </div>
     <div class="stats">
       <div class="stat"><b>${S.sessions.length}</b><span>sessions</span></div>
@@ -215,6 +223,7 @@ function home() {
   const backup = app.querySelector('[data-act="backup"]');
   if (backup) backup.onclick = () => download(exportProfile(), S.name).then(home);
   app.querySelector('[data-act="math"]').onclick = runMath;
+  app.querySelector('[data-act="slaughter"]').onclick = openSlaughter;
   app.querySelector('[data-act="story"]').onclick = () => renderLibrary(app, {
     onBack: home,
     onRead: ch => renderChapter(app, ch, { onDone: home }),
@@ -401,7 +410,10 @@ async function runSession(customPlan) {
 function summary(plan, correct, newlyMet) {
   const S = load();
   toTop();
-  const owed = plan.math ? null : chapterOwed();
+  const owed = (plan.math || plan.mission) ? null : chapterOwed();
+  const missionJustDone = plan.mission
+    && missionProgress(missionById(plan.mission)).done === missionProgress(missionById(plan.mission)).total
+    ? missionById(plan.mission) : null;
   const total = plan.seq.length;
   const ctx = correct === total ? 'perfect' : 'sessionEnd';
   const nowBoring = plan.targets.filter(id => level(id) === LEVEL.BORING);
@@ -417,6 +429,9 @@ function summary(plan, correct, newlyMet) {
       <h1 style="font-size:44px">${correct} / ${total}</h1>
       <p class="msg plainmsg">${esc(say(ctx, { correct, total }, S.settings.personality))}</p>
     </div>
+    ${missionJustDone ? `
+      <div class="section-title">mission complete</div>
+      <p class="msg good">${esc(say('missionDone', { mission: missionJustDone.name }, S.settings.personality))}</p>` : ''}
     ${retired.length ? `
       <div class="section-title">now officially boring</div>
       <div class="family">${retired.map(t => `<span class="dull">${t}</span>`).join('')}</div>
@@ -444,9 +459,30 @@ function summary(plan, correct, newlyMet) {
       ${owed ? `<button class="btn primary big" data-act="unlock">Open chapter ${owed.index + 1}</button>` : ''}
       <button class="btn ${owed ? '' : 'primary '}big" data-act="home">Done</button>
     </div>`;
-  app.querySelector('[data-act="home"]').onclick = home;
+  app.querySelector('[data-act="home"]').onclick = plan.onDone || home;
   const unlock = app.querySelector('[data-act="unlock"]');
   if (unlock) unlock.onclick = () => openChapter(owed);
+}
+
+function openSlaughter() {
+  renderSlaughter(app, { onBack: home, onDrill: runSlaughter });
+}
+
+/**
+ * A spelling drill. Curriculum words are not scheduled by the morphology
+ * engine, but the morphemes they contain still credit the same mastery store,
+ * so school's list feeds the Codex like everything else.
+ */
+function runSlaughter(missionId) {
+  const seq = drillQueue(missionId, 10);
+  if (!seq.length) return openSlaughter();
+  return runSession({
+    targets: [...new Set(seq.flatMap(s => s.word.morphemes))],
+    seq,
+    opener: 'slaughterOpen',
+    mission: missionId,
+    onDone: openSlaughter,
+  });
 }
 
 /** Break the gate word, get the chapter. The reward is made of the work. */

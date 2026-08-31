@@ -431,6 +431,62 @@ export const BANKS = {
     ],
   },
 
+  slaughterOpen: {
+    plain: ['Spelling list. Let\'s go.', 'School words today.'],
+    flavor: [
+      'These are the ones school wants. Same treatment as everything else.',
+      'A spelling list is just words somebody else chose. They still come apart.',
+    ],
+    joke: [
+      'Somebody at your school picked these words. We are going to take them apart anyway.',
+      'Spelling Slaughter. The name was not my idea, and I am delighted with it.',
+    ],
+    absurd: [],
+  },
+
+  spellClean: {
+    plain: ['Correct. No peeking.', 'Cold. Right first time.'],
+    flavor: [
+      'Spelled from memory with no help at all. That is the one that counts.',
+      'No peeks. That is the version of this that means something.',
+    ],
+    joke: [
+      'Correct, unassisted, unaided, and frankly unnecessary — you clearly had that one.',
+      'No peeking. I watched. I have nothing else to do.',
+    ],
+    absurd: [
+      'SPELLED COLD.\nThe word has been notified.\nThe word is taking it badly.',
+    ],
+  },
+
+  spellRight: {
+    plain: ['Correct.', 'That\'s it — {peeks} peek{peeks,s}.'],
+    flavor: [
+      'Correct. Peeking is fine; it just does not count as finished yet.',
+      'Right. Next time try it before looking and it will count.',
+    ],
+    joke: ['Correct, with assistance. I am recording the assistance. In pencil.'],
+    absurd: [],
+  },
+
+  spellWrong: {
+    plain: [
+      'Not that spelling. Look at the pieces again.',
+      'Close. One piece is not right.',
+    ],
+    flavor: [
+      'Not yet — peek at it, then come back.',
+      'That is a sensible spelling. English went a different way.',
+    ],
+  },
+
+  missionDone: {
+    plain: ['That mission is finished.'],
+    flavor: ['Every word in {mission} is done. Cold, twice, on different days.'],
+    joke: ['{mission} is finished. School does not know yet.'],
+    absurd: [],
+  },
+
   mathOpen: {
     plain: ['Numbers today.', 'Same idea, different subject.'],
     flavor: [
@@ -478,5 +534,5 @@ export const BANKS = {
 // escalate past `flavor`, whatever the personality setting says.
 export const GENTLE_CONTEXTS = new Set([
   'error', 'errorAutopsy', 'errorEquation', 'errorRepeat', 'hint',
-  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp',
+  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp', 'spellWrong',
 ]);

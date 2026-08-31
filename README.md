@@ -110,6 +110,8 @@ js/ui/boring.js       the fluency shelf
 js/core/fluency.js    per-item latency across days; retirement rules
 js/content/math.js    Show the Middle problem generation
 js/content/story.js   The Expedition — ten chapters
+js/content/missions.js  Spelling Slaughter — curriculum word lists
+js/core/mission.js    per-word slaughter status and drill ordering
 js/ui/story.js        chapter unlock flow and library
 js/ui/codex.js        the collection he is building
 tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs,
@@ -239,6 +241,30 @@ The total field is **disabled** until every partial is correct. That is the
 whole activity. Merely *asking* someone to show their working is ignored by
 anyone who has spent four years not showing it; the answer has to be
 structurally unreachable until the middle is done.
+
+### Spelling Slaughter — the school list
+
+School's spelling words, run through the slicer. Curriculum words live in
+`js/content/missions.js`, apart from `words.js`, so whatever the school is
+teaching this week cannot quietly steer the morphology scheduler. Everything
+else is shared: they parse identically, they credit the same mastery store, and
+the pieces they teach land in the same Codex.
+
+Each word is drilled structure-first — Autopsy before spelling, always, so what
+gets memorised has a shape instead of being ten loose letters. Then **look,
+cover, write, check**: the word is studied as coloured morphemes, covered, and
+typed from memory.
+
+Peeking is allowed, counted, and never punished — but a peeked answer is not
+evidence he can spell the word. A word is **slaughtered** only when spelled
+correctly, first attempt, with no peeks, on two SEPARATE days. Both halves
+matter: the peek gate separates recall from copying, and the day gate separates
+spelling from short-term memory.
+
+To add a mission, append to `MISSIONS` in `js/content/missions.js` using the
+same `surface:morphemeId` notation as the corpus. `tools/check.mjs` verifies
+every curriculum word decomposes exactly, resolves to real morphemes, is a real
+word, and that any `display` capitalisation matches the spelling.
 
 ### The Expedition — the narrative hook
 

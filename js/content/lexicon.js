@@ -8,6 +8,7 @@ import { WORDS, parseSpec } from './words.js';
 import { NOTES } from './notes.js';
 import { DERIVED_LITS } from './notes-derived.js';
 import { PSEUDO_SPECS } from './pseudo.js';
+import { MISSIONS, missionEntries } from './missions.js';
 
 const M = {};
 for (const [id, def] of Object.entries(MORPHEMES)) {
@@ -138,3 +139,27 @@ export const PSEUDO = PSEUDO_SPECS.map(spec => {
   w.pseudo = true;
   return w;
 });
+
+// ------------------------------------------------------ spelling slaughter
+// Curriculum words. Parsed exactly like corpus words so every activity can
+// consume them, but kept out of WORD_LIST so the morphology scheduler is not
+// quietly steered by whatever the school is teaching this week.
+export const MISSION_WORDS = {};
+export const MISSION_LIST = MISSIONS.map(m => {
+  const words = missionEntries(m).map(rec => {
+    const w = parseSpec(rec.spec);
+    w.id = 'm:' + w.text;
+    w.level = w.parts.length;
+    w.morphemes = w.parts.map(p => p.m);
+    w.display = rec.display || w.text;
+    w.mission = m.id;
+    w.group = rec.group;
+    w.groupLabel = rec.groupLabel;
+    if (rec.note) w.note = { lit: rec.note, curriculum: true };
+    MISSION_WORDS[w.text] = w;
+    return w;
+  });
+  return { ...m, words };
+});
+
+export function missionById(id) { return MISSION_LIST.find(m => m.id === id); }

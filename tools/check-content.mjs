@@ -4,12 +4,13 @@ import { MORPHEMES } from '../js/content/morphemes.js';
 import { WORD_SPECS, parseSpec } from '../js/content/words.js';
 import { NOTES } from '../js/content/notes.js';
 import { CHAPTERS } from '../js/content/story.js';
+import { MISSIONS, missionEntries } from '../js/content/missions.js';
 import { DERIVED_LITS } from '../js/content/notes-derived.js';
 import { readFileSync, existsSync } from 'node:fs';
 
 const DICT = '/usr/share/dict/words';
 // Real words the 1934 Webster's-derived system list simply predates or omits.
-const ALLOWLIST = new Set(['propel', 'overreact']);
+const ALLOWLIST = new Set(['propel', 'overreact', 'uncoordinated']);
 
 const lexicon = existsSync(DICT)
   ? new Set(readFileSync(DICT, 'utf8').split('\n').map(w => w.toLowerCase()))
@@ -54,6 +55,27 @@ for (const key of Object.keys(NOTES)) {
   if (!NOTES[key].lit) errors.push(`NOTES "${key}" has no lit phrase`);
 }
 
+// Spelling Slaughter words are curriculum content and get the same treatment:
+// they must decompose exactly, resolve to real morphemes, and be real words.
+let missionWords = 0;
+const missionSeen = new Map();
+for (const m of MISSIONS) {
+  for (const rec of missionEntries(m)) {
+    missionWords++;
+    const item = parseSpec(rec.spec);
+    for (const p of item.parts) {
+      if (!MORPHEMES[p.m]) errors.push(`${m.id} "${item.text}": unknown morpheme id "${p.m}"`);
+    }
+    if (lexicon && !lexicon.has(item.text) && !ALLOWLIST.has(item.text))
+      errors.push(`${m.id}: NOT A WORD: "${item.text}"  <-  ${rec.spec}`);
+    if (rec.display && rec.display.toLowerCase() !== item.text)
+      errors.push(`${m.id} "${item.text}": display "${rec.display}" does not match the spelling`);
+    if (missionSeen.has(item.text))
+      warnings.push(`${m.id}: "${item.text}" appears twice in the mission list`);
+    missionSeen.set(item.text, m.id);
+  }
+}
+
 // A chapter gate must be a real, genuinely long word — the lock is the point.
 for (const c of CHAPTERS) {
   const spec = seen.get(c.gate);
@@ -71,6 +93,7 @@ const withStory = Object.values(NOTES).filter(n => n.note).length;
 const totalNotes = new Set([...Object.keys(NOTES), ...Object.keys(DERIVED_LITS)]).size;
 console.log(`words: ${WORD_SPECS.length}   morphemes: ${Object.keys(MORPHEMES).length}`);
 console.log(`story: ${CHAPTERS.length} chapters, all gates verified`);
+console.log(`spelling slaughter: ${MISSIONS.length} mission(s), ${missionWords} words`);
 console.log(`notes: ${totalNotes}/${WORD_SPECS.length} (${Object.keys(NOTES).length} hand-written, ${withStory} with stories, ${Object.keys(DERIVED_LITS).length} derived)`);
 if (lexicon) console.log(`lexicon: ${DICT} (${lexicon.size} entries)`);
 else console.log('lexicon: NOT FOUND — real-word check skipped');

@@ -19,7 +19,7 @@ export const MORPHEMES = {
   sub:     { type:'prefix', gloss:'under, below',          origin:'latin',       forms:['sub','sup','suf'] },
   super:   { type:'prefix', gloss:'above, beyond',         origin:'latin',       forms:['super','sur'] },
   trans:   { type:'prefix', gloss:'across, through',       origin:'latin',       forms:['trans'] },
-  inter:   { type:'prefix', gloss:'between, among',        origin:'latin',       forms:['inter'] },
+  inter:   { type:'prefix', gloss:'between, among',        origin:'latin',       forms:['inter','intel'] },
   intra:   { type:'prefix', gloss:'inside',                origin:'latin',       forms:['intra'] },
   ex:      { type:'prefix', gloss:'out, out of',           origin:'latin',       forms:['ex','e','ef'] },
   in_not:  { type:'prefix', gloss:'not',                   origin:'latin',       forms:['in','im','il','ir'],
@@ -63,6 +63,9 @@ export const MORPHEMES = {
   multi:   { type:'prefix', gloss:'many',                   origin:'latin',       forms:['multi'] },
   non:     { type:'prefix', gloss:'not',                    origin:'latin',       forms:['non'] },
   over:    { type:'prefix', gloss:'too much, above',        origin:'old english', forms:['over'] },
+
+  omni:    { type:'prefix', gloss:'all, every',             origin:'latin',       forms:['omni'] },
+  medi:    { type:'prefix', gloss:'middle',                 origin:'latin',       forms:['medi'] },
 
   // ---------- ROOTS ----------
   spect:  { type:'root', gloss:'to look, to watch',   origin:'latin', forms:['spect','spec','spic'] },
@@ -138,7 +141,7 @@ export const MORPHEMES = {
 
   vent:   { type:'root', gloss:'to come',              origin:'latin', forms:['vent'] },
   mot:    { type:'root', gloss:'to move',              origin:'latin', forms:['mot','mote','mob'] },
-  lect:   { type:'root', gloss:'to choose, to gather', origin:'latin', forms:['lect'] },
+  lect:   { type:'root', gloss:'to choose, to gather', origin:'latin', forms:['lect','lig'] },
   fin:    { type:'root', gloss:'end, limit',           origin:'latin', forms:['fin','fine'] },
   son:    { type:'root', gloss:'sound',                origin:'latin', forms:['son'] },
   sci:    { type:'root', gloss:'to know',              origin:'latin', forms:['sci'] },
@@ -152,6 +155,14 @@ export const MORPHEMES = {
   dent:   { type:'root', gloss:'tooth',                origin:'latin', forms:['dent'] },
   the:    { type:'root', gloss:'god',                  origin:'greek', forms:['the'] },
   nav:    { type:'root', gloss:'ship',                 origin:'latin', forms:['nav'] },
+
+  pot:     { type:'root', gloss:'power, able',         origin:'latin', forms:['pot'] },
+  ordin:   { type:'root', gloss:'order, rank',         origin:'latin', forms:['ordin','ord'] },
+  grac:    { type:'root', gloss:'favour, thanks',      origin:'latin', forms:['grac','grat'] },
+  solv:    { type:'root', gloss:'to loosen, to free',  origin:'latin', forms:['solv','solu'] },
+  spond:   { type:'root', gloss:'to promise, to answer', origin:'latin', forms:['spond','spons'] },
+  merg:    { type:'root', gloss:'to dip, to plunge',   origin:'latin', forms:['merg','mers'] },
+  vor:     { type:'root', gloss:'to eat, to devour',   origin:'latin', forms:['vor','vore'] },
 
   // ---------- EVERYDAY BASES (Germanic) ----------
   // Low-friction warm-up stems. They also give the high-frequency English
@@ -191,6 +202,11 @@ export const MORPHEMES = {
   cover:  { type:'root', gloss:'to cover',       origin:'old english', forms:['cover'] },
   part:   { type:'root', gloss:'part, piece',    origin:'latin',       forms:['part'] },
 
+  rely:    { type:'root', gloss:'to depend, to trust', origin:'old english', forms:['rely','reli'] },
+  season:  { type:'root', gloss:'season',              origin:'old english', forms:['season'] },
+  worth:   { type:'root', gloss:'worth, value',        origin:'old english', forms:['worth'] },
+  present: { type:'root', gloss:'here, at hand',       origin:'latin',       forms:['present'] },
+
   // ---------- SUFFIXES ----------
   tion:   { type:'suffix', gloss:'the act or result of',    origin:'latin', forms:['tion','sion','ation','ition'] },
   able:   { type:'suffix', gloss:'able to be',              origin:'latin', forms:['able','ible','ile'] },
@@ -199,7 +215,7 @@ export const MORPHEMES = {
   ful:    { type:'suffix', gloss:'full of',                 origin:'old english', forms:['ful'] },
   less:   { type:'suffix', gloss:'without',                 origin:'old english', forms:['less'] },
   ly:     { type:'suffix', gloss:'in that way',             origin:'old english', forms:['ly'] },
-  er:     { type:'suffix', gloss:'one who does it',         origin:'old english', forms:['er','or','ar'] },
+  er:     { type:'suffix', gloss:'one who does it',         origin:'old english', forms:['er','or','ar','ier'] },
   ist:    { type:'suffix', gloss:'one who does it',         origin:'greek', forms:['ist'] },
   ive:    { type:'suffix', gloss:'tending to',              origin:'latin', forms:['ive','ative','itive'] },
   al:     { type:'suffix', gloss:'relating to',             origin:'latin', forms:['al','ial'] },
@@ -210,11 +226,13 @@ export const MORPHEMES = {
   ify:    { type:'suffix', gloss:'to make',                 origin:'latin', forms:['ify','fy'] },
   ance:   { type:'suffix', gloss:'the state of',            origin:'latin', forms:['ance','ence'] },
   ant:    { type:'suffix', gloss:'one who, doing',          origin:'latin', forms:['ant','ent'] },
-  ary:    { type:'suffix', gloss:'relating to, place for',  origin:'latin', forms:['ary','ory','ery'] },
+  ary:    { type:'suffix', gloss:'relating to, place for',  origin:'latin', forms:['ary','ory','ery','arium'] },
   logy:   { type:'suffix', gloss:'the study of',            origin:'greek', forms:['logy','ology'] },
   phobia: { type:'suffix', gloss:'fear of',                 origin:'greek', forms:['phobia','phobic'] },
-  ate:    { type:'suffix', gloss:'to make, to become',       origin:'latin', forms:['ate'] },
+  ate:    { type:'suffix', gloss:'to make, to become',       origin:'latin', forms:['ate','ated'] },
   ism:    { type:'suffix', gloss:'a belief or practice',     origin:'greek', forms:['ism'] },
+  an:     { type:'suffix', gloss:'belonging to, from',      origin:'latin', forms:['an','ean','ian','ain','anean'] },
+  ed:     { type:'suffix', gloss:'already happened',        origin:'old english', forms:['ed'] },
   ure:    { type:'suffix', gloss:'the act or result of',    origin:'latin', forms:['ure','ature'] },
   y:      { type:'suffix', gloss:'the state or study of',   origin:'greek', forms:['y'] },
   oid:    { type:'suffix', gloss:'shaped like',             origin:'greek', forms:['oid'] },

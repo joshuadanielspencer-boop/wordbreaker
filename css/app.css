@@ -451,3 +451,33 @@ body {
 .chapter-row b { flex: 1; font-size: 17px; }
 .chapter-gate { font-family: var(--mono); font-size: 12px; color: var(--ink-dim); }
 .chapter-row.locked { cursor: default; opacity: .4; }
+
+/* ---------- spelling slaughter ---------- */
+.mission-card {
+  display: block; width: 100%; font: inherit; color: inherit; cursor: pointer;
+  text-align: left; background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: var(--r); padding: 16px 18px; margin-bottom: 10px;
+}
+.mission-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.mission-head b { font-size: 19px; }
+.mission-sub { flex: 1; font-size: 13px; color: var(--ink-dim); font-family: var(--mono); }
+.mission-count { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.slaughter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.slaughter-word {
+  background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: 12px; padding: 12px 14px;
+}
+.slaughter-word b { display: block; font-size: 17px; }
+.sw-parts { display: block; font-family: var(--mono); font-size: 11px; color: var(--ink-dim); margin-top: 3px; }
+.sw-state { display: block; font-size: 11px; margin-top: 6px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-dim); }
+.slaughter-word.started { border-color: var(--root); }
+.slaughter-word.close   { border-color: var(--suffix); }
+.slaughter-word.close .sw-state { color: var(--suffix); font-weight: 700; }
+.slaughter-word.done { border-color: var(--good); opacity: .7; }
+.slaughter-word.done b { text-decoration: line-through; }
+.slaughter-word.done .sw-state { color: var(--good); font-weight: 700; }
+
+/* Look, cover, write, check. */
+.spellstage { transition: filter .18s, opacity .18s; }
+.spellstage.covered { filter: blur(9px); opacity: .32; user-select: none; }
