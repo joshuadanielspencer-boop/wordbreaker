@@ -1,7 +1,17 @@
 // COLD RECALL — the actual spelling test.
 //
-// The word is never shown. He gets the meaning and the shape, and has to
-// produce the spelling from nothing.
+// The word is never shown. It runs in one of two prompt modes:
+//
+//   'meaning' — the definition, which tests spelling AND vocabulary
+//   'sound'   — the word read aloud, which is what a real spelling test is
+//
+// Both are cold: nothing on screen spells anything. The two modes test
+// different routes into the same word, so a word has to survive both before it
+// counts as finished, and neither route can be used to dodge the other.
+//
+// Replaying the audio is free — it is the prompt, not a hint. What each mode
+// offers as its FIRST hint is the other mode's prompt, which keeps the ladder
+// symmetrical.
 //
 // This exists because the other two activities cannot test spelling, however
 // they are dressed up. Look-cover-write hides the word for about three seconds,
@@ -18,6 +28,7 @@
 
 import { MORPH } from '../content/lexicon.js';
 import { say } from '../voice/voice.js';
+import { say as speak, speechAvailable } from '../core/speech.js';
 
 export function mount(el, word, opts = {}) {
   return new Promise(resolve => {
@@ -26,12 +37,18 @@ export function mount(el, word, opts = {}) {
     let attempts = 0;
     const target = word.text;
     const shown = word.display || word.text;
+    const mode = opts.mode === 'sound' && speechAvailable() ? 'sound' : 'meaning';
+    let plays = 0;
 
     el.innerHTML = `
       <div class="act act-recall">
-        <p class="prompt">Spell it. No looking — there is nothing to look at.</p>
+        <p class="prompt">${mode === 'sound'
+          ? 'Listen, then spell it.'
+          : 'Spell it. No looking — there is nothing to look at.'}</p>
         <div class="casefile recall-card">
-          <p class="definition">${word.def}</p>
+          ${mode === 'sound'
+            ? `<button class="btn speak-big" data-act="play">Play the word again</button>`
+            : `<p class="definition">${word.def}</p>`}
           <p class="shape">
             <span>${word.parts.length} pieces</span>
             <span>${target.length} letters</span>
@@ -54,16 +71,23 @@ export function mount(el, word, opts = {}) {
     el.querySelector('[data-act="hint"]').onclick = hint;
     el.querySelector('[data-act="go"]').onclick = check;
 
+    if (mode === 'sound') {
+      const play = () => { plays++; speak(target); input.focus(); };
+      el.querySelector('[data-act="play"]').onclick = play;
+      setTimeout(play, 350);            // read it once on arrival
+    }
+
     /** Each rung gives away a little more, and never the spelling outright. */
     function hint() {
       hints++;
       const card = el.querySelector('.recall-card');
       if (hints === 1) {
-        // The meanings of the pieces — not their spellings.
-        card.insertAdjacentHTML('beforeend',
-          `<p class="hint-line">${word.parts.map(p =>
-            `<span class="link ${MORPH[p.m].type}">${MORPH[p.m].gloss}</span>`)
-            .join('<span class="linkjoin">+</span>')}</p>`);
+        // Each mode's first hint is the other mode's prompt.
+        card.insertAdjacentHTML('beforeend', mode === 'sound'
+          ? `<p class="hint-line"><span class="definition">${word.def}</span></p>`
+          : `<p class="hint-line">${word.parts.map(p =>
+              `<span class="link ${MORPH[p.m].type}">${MORPH[p.m].gloss}</span>`)
+              .join('<span class="linkjoin">+</span>')}</p>`);
       } else if (hints === 2) {
         // The shape of the word, with only the first letter of each piece.
         card.insertAdjacentHTML('beforeend',
@@ -125,7 +149,7 @@ export function mount(el, word, opts = {}) {
       el.querySelector('.actions').innerHTML =
         `<button class="btn primary" data-act="next">Next</button>`;
       el.querySelector('[data-act="next"]').focus();
-      resolve({ correct: ok, ms, credit, detail: { given, hints, attempts, clean } });
+      resolve({ correct: ok, ms, credit, detail: { given, hints, attempts, clean, mode, plays } });
     }
   });
 }

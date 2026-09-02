@@ -3,6 +3,7 @@ import {
   signOut, deleteProfile, renameProfile, exportProfile, importProfile,
   resetProfile, requestPersistence, sessionsSinceBackup, markBackedUp, AVATARS,
 } from './core/store.js';
+import { initSpeech } from './core/speech.js';
 import { planSession, recoveryItem, itemsForMorpheme, encoreItems } from './core/scheduler.js';
 import { record, level, LEVEL, LEVEL_NAME, weakest, entry as mastEntry } from './core/mastery.js';
 import { push as logPush } from './core/log.js';
@@ -306,7 +307,7 @@ async function runSession(customPlan) {
 
     const res = await ACTIVITIES[step.activity](
       document.getElementById('stage'), step.word,
-      { personality: S.settings.personality });
+      { personality: S.settings.personality, mode: step.mode });
     if (aborted) return;
 
     results.push(res.correct);
@@ -588,4 +589,5 @@ function parentView() {
 
 loadRoot();
 requestPersistence();
+initSpeech();          // voice list populates asynchronously; ask early
 load() ? home() : picker();

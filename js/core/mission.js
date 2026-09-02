@@ -9,9 +9,17 @@
 // spelling. Cold recall never shows the word at all, which is the only one of
 // the three that is actually evidence. Look-cover-write remains in the drill
 // as practice; it just no longer certifies anything.
+//
+// Cold recall runs in two prompt modes — from the definition and from the word
+// read aloud — and a word must survive BOTH before it is finished. A speller
+// who can only go from sound has memorised a noise; one who can only go from
+// meaning may never have connected the word to how it is said. Where the
+// browser has no speech, the sound half is dropped rather than making the word
+// unfinishable.
 
 import { load } from './store.js';
 import { MISSION_LIST, missionById } from '../content/lexicon.js';
+import { speechAvailable } from './speech.js';
 
 const CLEAN_NEEDED = 2;
 const dayOf = t => new Date(t).toISOString().slice(0, 10);
@@ -23,6 +31,7 @@ export function wordStatus(text) {
     seen: 0, spelled: 0, recalled: 0, peeks: 0, hints: 0, lastT: 0,
     practisedDays: new Set(),   // clean look-cover-write: practice, not proof
     cleanDays: new Set(),       // clean cold recall: the thing that counts
+    cleanModes: new Set(),      // which prompt routes have been proven
     slaughtered: false,
   };
   if (!S) return out;
@@ -39,10 +48,16 @@ export function wordStatus(text) {
     if (r.activity === 'recall') {
       out.recalled++;
       out.hints += r.detail?.hints || 0;
-      if (r.detail?.clean) out.cleanDays.add(dayOf(r.t));
+      if (r.detail?.clean) {
+        out.cleanDays.add(dayOf(r.t));
+        // Older records predate dictation and are treated as meaning-mode.
+        out.cleanModes.add(r.detail.mode === 'sound' ? 'sound' : 'meaning');
+      }
     }
   }
-  out.slaughtered = out.cleanDays.size >= CLEAN_NEEDED;
+  const bothRoutes = !speechAvailable()
+    || (out.cleanModes.has('meaning') && out.cleanModes.has('sound'));
+  out.slaughtered = out.cleanDays.size >= CLEAN_NEEDED && bothRoutes;
   return out;
 }
 
@@ -84,9 +99,14 @@ export function drillQueue(missionId, n = 10) {
       // Seen the structure but never written it: practise before testing.
       queue.push({ word: w, activity: 'spell', phase: 'slaughter' });
     } else {
-      // It has been practised, so test it cold. This is the only activity
-      // that can move a word toward slaughtered.
-      queue.push({ word: w, activity: 'recall', phase: 'slaughter' });
+      // It has been practised, so test it cold. Whichever route has not been
+      // proven yet is the one worth asking for.
+      const mode = speechAvailable() && !s.cleanModes.has('sound') && s.cleanModes.has('meaning')
+        ? 'sound'
+        : speechAvailable() && !s.cleanModes.has('meaning') && s.cleanModes.has('sound')
+          ? 'meaning'
+          : (speechAvailable() && Math.random() < 0.5 ? 'sound' : 'meaning');
+      queue.push({ word: w, activity: 'recall', phase: 'slaughter', mode });
     }
   }
   return queue.slice(0, n);

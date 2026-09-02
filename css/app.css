@@ -499,3 +499,11 @@ body {
   margin: 14px 0 0; padding-top: 14px; border-top: 1.5px dashed var(--line);
   font-size: 26px; font-weight: 800; text-align: center;
 }
+
+/* ---------- speech ---------- */
+.btn.speak { font-size: 20px; padding: 12px 16px; line-height: 1; }
+.speak-big {
+  width: 100%; font-size: 17px; font-weight: 700; padding: 22px;
+  border-style: dashed; border-width: 2px;
+}
+.speak-big:hover { border-style: solid; }

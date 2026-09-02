@@ -11,6 +11,7 @@
 
 import { MORPH } from '../content/lexicon.js';
 import { say } from '../voice/voice.js';
+import { say as speak, speechAvailable } from '../core/speech.js';
 
 export function mount(el, word, opts = {}) {
   return new Promise(resolve => {
@@ -32,6 +33,7 @@ export function mount(el, word, opts = {}) {
         </div>
         <div class="feedback" aria-live="polite"></div>
         <div class="actions">
+          ${speechAvailable() ? `<button class="btn ghost speak" data-act="speak" aria-label="hear the word">🔊</button>` : ''}
           <button class="btn primary" data-act="cover">Cover it</button>
         </div>
       </div>`;
@@ -39,6 +41,8 @@ export function mount(el, word, opts = {}) {
     const stage = el.querySelector('.spellstage');
     const feedback = el.querySelector('.feedback');
     el.querySelector('[data-act="cover"]').onclick = cover;
+    const studySpeak = el.querySelector('[data-act="speak"]');
+    if (studySpeak) studySpeak.onclick = () => speak(word.text);
 
     function cover() {
       stage.classList.add('covered');

@@ -112,6 +112,7 @@ js/content/math.js    Show the Middle problem generation
 js/content/story.js   The Expedition — ten chapters
 js/content/missions.js  Spelling Slaughter — curriculum word lists
 js/core/mission.js    per-word slaughter status and drill ordering
+js/core/speech.js     browser voices — spelling strand only
 js/ui/story.js        chapter unlock flow and library
 js/ui/codex.js        the collection he is building
 tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs,
@@ -256,10 +257,12 @@ Each word runs through three stages, each giving away less than the last:
    instead of being ten loose letters.
 2. **Look, cover, write, check** — studied as coloured morphemes, covered, then
    typed. Peeks are counted and never punished. This is *practice*.
-3. **Cold recall** — the word is never shown. He gets the definition and the
-   shape (how many pieces, how many letters) and has to produce the spelling
-   from nothing. This is the *test*, and it is the only stage that certifies
-   anything.
+3. **Cold recall** — the word is never shown. This is the *test*, and the only
+   stage that certifies anything. It runs in two prompt modes:
+   - **from the meaning** — the definition plus the shape (how many pieces, how
+     many letters)
+   - **from the sound** — the word read aloud, which is what a real spelling
+     test actually is
 
 The third stage exists because neither of the others can test spelling, however
 they are dressed up. Look-cover-write hides the word for about three seconds,
@@ -267,20 +270,43 @@ so passing it demonstrates working memory. Word Equation lays out
 `un + trust + worth + y`, which is every letter in the right order. Both are
 useful practice; neither is evidence.
 
-A classroom spelling test says the word aloud. With no audio, the closest
-honest substitute is the definition — which has the side benefit that he cannot
-produce the spelling without knowing what the word means. Every curriculum word
-therefore requires a `def`, and `tools/check.mjs` fails the build without one,
-or if a definition contains the word it is defining.
+### Where the audio goes, and where it deliberately does not
 
-Recall hints are a ladder and each rung is counted but never scolded: first the
-*meanings* of the pieces, then a skeleton showing only each piece's first
-letter (`u· + t···· + w···· + y`), then a refusal. What matters is not whether
-he needed one today, but that he needs fewer over time.
+Speech is used in the spelling strand only, via the browser's own voices — no
+files, no network. It is safe here because every curriculum word is a **real
+English word**; a speech engine is language-model driven and would mangle the
+invented words in the transfer test, so nothing outside Spelling Slaughter
+touches it.
+
+Hearing the word is the authentic prompt for a spelling test, not a shortcut —
+but only in the right place. Audio appears:
+
+- as the **dictation prompt** for cold recall, where replaying is free because
+  it *is* the prompt
+- on the **autopsy reveal**, where the word is already on screen, so hearing it
+  costs nothing and links spelling to sound
+- during the **study** phase of look-cover-write
+
+It deliberately does not appear as a hint inside meaning-mode recall, and not
+after the cover in look-cover-write. In both places it would be an uncounted
+substitute for a counted one, and it would flatten the hint ladder — "say the
+word" gives away far more than either existing rung, so it would become the
+only hint ever used.
+
+Instead each mode's first hint is **the other mode's prompt**: dictation offers
+the definition, meaning offers the piece meanings. Then a skeleton showing only
+each piece's first letter (`u· + t···· + w···· + y`), then a refusal. Every rung
+is counted and none is scolded — what matters is not whether he needed one
+today, but that he needs fewer over time.
 
 A word is **slaughtered** only when recalled cold — correct, first attempt, no
-hints — on two SEPARATE days. The hint gate separates recall from copying; the
-day gate separates spelling from short-term memory.
+hints — on two SEPARATE days, **and by both routes**. A speller who can only go
+from sound has memorised a noise; one who can only go from meaning may never
+have connected the word to how it is said. Where the browser has no speech the
+sound half is dropped rather than making words unfinishable.
+
+Every curriculum word requires a `def`; `tools/check.mjs` fails the build
+without one, or if a definition contains the word it is defining.
 
 To add a mission, append to `MISSIONS` in `js/content/missions.js` using the
 same `surface:morphemeId` notation as the corpus. `tools/check.mjs` verifies
