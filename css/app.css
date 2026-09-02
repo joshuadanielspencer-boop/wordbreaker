@@ -481,3 +481,21 @@ body {
 /* Look, cover, write, check. */
 .spellstage { transition: filter .18s, opacity .18s; }
 .spellstage.covered { filter: blur(9px); opacity: .32; user-select: none; }
+
+/* ---------- cold recall ---------- */
+.recall-card { text-align: left; }
+.definition { font-size: 19px; line-height: 1.5; margin: 0; font-weight: 600; }
+.shape { display: flex; gap: 8px; margin: 14px 0 0; }
+.shape span {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700;
+  color: var(--ink-dim); background: var(--surface-2); padding: 5px 10px; border-radius: 999px;
+}
+.hint-line {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 14px 0 0; padding-top: 14px; border-top: 1.5px dashed var(--line);
+}
+.hint-line.skeleton .link { font-family: var(--mono); letter-spacing: .12em; }
+.recall-answer {
+  margin: 14px 0 0; padding-top: 14px; border-top: 1.5px dashed var(--line);
+  font-size: 26px; font-weight: 800; text-align: center;
+}

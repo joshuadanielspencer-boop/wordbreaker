@@ -42,7 +42,9 @@ export function mount(el, word, opts = {}) {
 
     function cover() {
       stage.classList.add('covered');
-      el.querySelector('.prompt').textContent = `Write ${word.display || word.text}.`;
+      // NEVER put the word in the prompt. It was there once, which left the
+      // answer on screen for the whole of the phase that is supposed to hide it.
+      el.querySelector('.prompt').textContent = 'Now write it from memory.';
       el.querySelector('.actions').innerHTML = `
         <button class="btn ghost" data-act="peek">Peek</button>
         <button class="btn primary" data-act="go">Check it</button>`;

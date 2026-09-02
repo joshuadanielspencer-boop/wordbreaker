@@ -68,6 +68,10 @@ for (const m of MISSIONS) {
     }
     if (lexicon && !lexicon.has(item.text) && !ALLOWLIST.has(item.text))
       errors.push(`${m.id}: NOT A WORD: "${item.text}"  <-  ${rec.spec}`);
+    if (!rec.def)
+      errors.push(`${m.id} "${item.text}": no definition — cold recall has nothing to prompt with`);
+    if (rec.def && rec.def.toLowerCase().includes(item.text))
+      errors.push(`${m.id} "${item.text}": the definition contains the word itself`);
     if (rec.display && rec.display.toLowerCase() !== item.text)
       errors.push(`${m.id} "${item.text}": display "${rec.display}" does not match the spelling`);
     if (missionSeen.has(item.text))

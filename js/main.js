@@ -14,6 +14,7 @@ import { mount as detective } from './activities/detective.js';
 import { mount as invent } from './activities/invent.js';
 import { mount as middle } from './activities/middle.js';
 import { mount as spell } from './activities/spell.js';
+import { mount as recall } from './activities/recall.js';
 import { makeProblem, pickSkill, SKILLS, LADDER } from './content/math.js';
 import { renderCodex } from './ui/codex.js';
 import { renderRadar } from './ui/radar.js';
@@ -25,7 +26,7 @@ import { drillQueue, allMissions, missionProgress } from './core/mission.js';
 import { missionById } from './content/lexicon.js';
 import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
-const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell };
+const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell, recall };
 const PERSONALITIES = ['normal', 'funny', 'ridiculous', 'unsupervised'];
 const app = document.getElementById('app');
 

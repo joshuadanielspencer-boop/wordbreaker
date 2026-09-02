@@ -250,16 +250,37 @@ teaching this week cannot quietly steer the morphology scheduler. Everything
 else is shared: they parse identically, they credit the same mastery store, and
 the pieces they teach land in the same Codex.
 
-Each word is drilled structure-first — Autopsy before spelling, always, so what
-gets memorised has a shape instead of being ten loose letters. Then **look,
-cover, write, check**: the word is studied as coloured morphemes, covered, and
-typed from memory.
+Each word runs through three stages, each giving away less than the last:
 
-Peeking is allowed, counted, and never punished — but a peeked answer is not
-evidence he can spell the word. A word is **slaughtered** only when spelled
-correctly, first attempt, with no peeks, on two SEPARATE days. Both halves
-matter: the peek gate separates recall from copying, and the day gate separates
-spelling from short-term memory.
+1. **Autopsy** — structure first, always, so what gets memorised has a shape
+   instead of being ten loose letters.
+2. **Look, cover, write, check** — studied as coloured morphemes, covered, then
+   typed. Peeks are counted and never punished. This is *practice*.
+3. **Cold recall** — the word is never shown. He gets the definition and the
+   shape (how many pieces, how many letters) and has to produce the spelling
+   from nothing. This is the *test*, and it is the only stage that certifies
+   anything.
+
+The third stage exists because neither of the others can test spelling, however
+they are dressed up. Look-cover-write hides the word for about three seconds,
+so passing it demonstrates working memory. Word Equation lays out
+`un + trust + worth + y`, which is every letter in the right order. Both are
+useful practice; neither is evidence.
+
+A classroom spelling test says the word aloud. With no audio, the closest
+honest substitute is the definition — which has the side benefit that he cannot
+produce the spelling without knowing what the word means. Every curriculum word
+therefore requires a `def`, and `tools/check.mjs` fails the build without one,
+or if a definition contains the word it is defining.
+
+Recall hints are a ladder and each rung is counted but never scolded: first the
+*meanings* of the pieces, then a skeleton showing only each piece's first
+letter (`u· + t···· + w···· + y`), then a refusal. What matters is not whether
+he needed one today, but that he needs fewer over time.
+
+A word is **slaughtered** only when recalled cold — correct, first attempt, no
+hints — on two SEPARATE days. The hint gate separates recall from copying; the
+day gate separates spelling from short-term memory.
 
 To add a mission, append to `MISSIONS` in `js/content/missions.js` using the
 same `surface:morphemeId` notation as the corpus. `tools/check.mjs` verifies

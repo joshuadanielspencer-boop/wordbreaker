@@ -152,6 +152,7 @@ export const MISSION_LIST = MISSIONS.map(m => {
     w.level = w.parts.length;
     w.morphemes = w.parts.map(p => p.m);
     w.display = rec.display || w.text;
+    w.def = rec.def;
     w.mission = m.id;
     w.group = rec.group;
     w.groupLabel = rec.groupLabel;

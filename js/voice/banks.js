@@ -480,6 +480,43 @@ export const BANKS = {
     ],
   },
 
+  recallClean: {
+    plain: ['Correct. Cold.', 'Right — no help at all.'],
+    flavor: [
+      'Spelled from nothing but the meaning. That is the real thing.',
+      'No hints, first go. That one is genuinely yours now.',
+      'You produced that from a definition. Nobody showed you a single letter.',
+    ],
+    joke: [
+      'Correct, from a description, with no letters provided. That is basically archaeology.',
+      'You spelled it out of thin air. I showed you nothing and you built it anyway.',
+    ],
+    absurd: [
+      'SPELLED FROM NOTHING.\nNo letters were supplied.\nThe Department is reviewing its security.',
+    ],
+  },
+
+  recallRight: {
+    plain: ['Correct.', 'That\'s it — {hints} hint{hints,s}.'],
+    flavor: [
+      'Correct. Hints are fine — next time try it before reaching for one.',
+      'Right, with help. The help is the part that should shrink.',
+    ],
+    joke: ['Correct, with assistance, which I am noting down in my little book.'],
+    absurd: [],
+  },
+
+  recallWrong: {
+    plain: [
+      'Not that spelling. Think about the pieces.',
+      'Not quite — try a hint if you want one.',
+    ],
+    flavor: [
+      'Not yet. What would each piece be spelled like on its own?',
+      'That is a fair attempt. Take a hint — that is what it is there for.',
+    ],
+  },
+
   missionDone: {
     plain: ['That mission is finished.'],
     flavor: ['Every word in {mission} is done. Cold, twice, on different days.'],
@@ -534,5 +571,5 @@ export const BANKS = {
 // escalate past `flavor`, whatever the personality setting says.
 export const GENTLE_CONTEXTS = new Set([
   'error', 'errorAutopsy', 'errorEquation', 'errorRepeat', 'hint',
-  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp', 'spellWrong',
+  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp', 'spellWrong', 'recallWrong',
 ]);

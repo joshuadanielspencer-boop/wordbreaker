@@ -1,10 +1,14 @@
 // SPELLING SLAUGHTER — progress over a curriculum list.
 //
-// A word counts as slaughtered when it has been spelled correctly from memory,
-// with no peeks, on two SEPARATE days. Both halves matter: peeking is allowed
-// and never punished, but a peeked answer is not evidence he can spell it, and
-// two hits in one sitting is evidence of short-term memory rather than of
-// spelling.
+// A word counts as slaughtered when it has been produced COLD — from the
+// definition alone, with no hints and on the first attempt — on two SEPARATE
+// days.
+//
+// It used to count look-cover-write, which was wrong. That activity hides the
+// word for about three seconds, so passing it demonstrates working memory, not
+// spelling. Cold recall never shows the word at all, which is the only one of
+// the three that is actually evidence. Look-cover-write remains in the drill
+// as practice; it just no longer certifies anything.
 
 import { load } from './store.js';
 import { MISSION_LIST, missionById } from '../content/lexicon.js';
@@ -15,17 +19,28 @@ const dayOf = t => new Date(t).toISOString().slice(0, 10);
 /** Per-word history across every activity, plus the clean-spell record. */
 export function wordStatus(text) {
   const S = load();
-  const out = { seen: 0, spelled: 0, cleanDays: new Set(), lastT: 0, peeks: 0, slaughtered: false };
+  const out = {
+    seen: 0, spelled: 0, recalled: 0, peeks: 0, hints: 0, lastT: 0,
+    practisedDays: new Set(),   // clean look-cover-write: practice, not proof
+    cleanDays: new Set(),       // clean cold recall: the thing that counts
+    slaughtered: false,
+  };
   if (!S) return out;
 
   for (const r of S.log) {
     if (r.item !== 'm:' + text) continue;
     out.seen++;
     out.lastT = Math.max(out.lastT, r.t);
-    if (r.activity !== 'spell') continue;
-    out.spelled++;
-    out.peeks += r.detail?.peeks || 0;
-    if (r.detail?.clean) out.cleanDays.add(dayOf(r.t));
+    if (r.activity === 'spell') {
+      out.spelled++;
+      out.peeks += r.detail?.peeks || 0;
+      if (r.detail?.clean) out.practisedDays.add(dayOf(r.t));
+    }
+    if (r.activity === 'recall') {
+      out.recalled++;
+      out.hints += r.detail?.hints || 0;
+      if (r.detail?.clean) out.cleanDays.add(dayOf(r.t));
+    }
   }
   out.slaughtered = out.cleanDays.size >= CLEAN_NEEDED;
   return out;
@@ -64,13 +79,14 @@ export function drillQueue(missionId, n = 10) {
     if (s.seen === 0) {
       // Structure before spelling, always.
       queue.push({ word: w, activity: 'autopsy', phase: 'slaughter' });
+      if (queue.length < n) queue.push({ word: w, activity: 'spell', phase: 'slaughter' });
+    } else if (s.spelled === 0) {
+      // Seen the structure but never written it: practise before testing.
       queue.push({ word: w, activity: 'spell', phase: 'slaughter' });
-    } else if (s.cleanDays.size >= 1) {
-      // Nearly done: prove it cold, then prove you can rebuild it.
-      queue.push({ word: w, activity: 'spell', phase: 'slaughter' });
-      if (queue.length < n) queue.push({ word: w, activity: 'equation', phase: 'slaughter' });
     } else {
-      queue.push({ word: w, activity: 'spell', phase: 'slaughter' });
+      // It has been practised, so test it cold. This is the only activity
+      // that can move a word toward slaughtered.
+      queue.push({ word: w, activity: 'recall', phase: 'slaughter' });
     }
   }
   return queue.slice(0, n);
