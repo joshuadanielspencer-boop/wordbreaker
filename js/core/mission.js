@@ -32,6 +32,9 @@ export function wordStatus(text) {
     practisedDays: new Set(),   // clean look-cover-write: practice, not proof
     cleanDays: new Set(),       // clean cold recall: the thing that counts
     cleanModes: new Set(),      // which prompt routes have been proven
+    defSeen: 0,                 // times the DEFINITION was actually taught
+    misses: 0,                  // wrong answers, any stage
+    wrongSpellings: [],         // what he actually wrote, newest last
     slaughtered: false,
   };
   if (!S) return out;
@@ -40,6 +43,13 @@ export function wordStatus(text) {
     if (r.item !== 'm:' + text) continue;
     out.seen++;
     out.lastT = Math.max(out.lastT, r.t);
+    // Any stage that put the definition on screen counts as having taught it.
+    if (r.detail?.defShown) out.defSeen++;
+    if (!r.correct && (r.activity === 'spell' || r.activity === 'recall')) {
+      out.misses++;
+      const given = r.detail?.given;
+      if (given && given !== text) out.wrongSpellings.push({ t: r.t, given, activity: r.activity });
+    }
     if (r.activity === 'spell') {
       out.spelled++;
       out.peeks += r.detail?.peeks || 0;
@@ -98,16 +108,74 @@ export function drillQueue(missionId, n = 10) {
     } else if (s.spelled === 0) {
       // Seen the structure but never written it: practise before testing.
       queue.push({ word: w, activity: 'spell', phase: 'slaughter' });
+    } else if (s.defSeen === 0 && !speechAvailable()) {
+      // The definition has never been shown and there is no voice to test the
+      // other route with, so there is no fair test available yet. Practise it
+      // once more — which is now the screen that teaches the definition.
+      queue.push({ word: w, activity: 'spell', phase: 'slaughter' });
     } else {
       // It has been practised, so test it cold. Whichever route has not been
       // proven yet is the one worth asking for.
-      const mode = speechAvailable() && !s.cleanModes.has('sound') && s.cleanModes.has('meaning')
-        ? 'sound'
-        : speechAvailable() && !s.cleanModes.has('meaning') && s.cleanModes.has('sound')
-          ? 'meaning'
-          : (speechAvailable() && Math.random() < 0.5 ? 'sound' : 'meaning');
+      //
+      // Meaning mode is only ever offered once the definition has actually been
+      // taught. Asking a child to produce a word from a sentence he has never
+      // been shown is a vocabulary guess wearing a spelling test's clothes, and
+      // it fails him for something nobody taught him.
+      const canMeaning = s.defSeen > 0;
+      const canSound = speechAvailable();
+      const needSound = canSound && !s.cleanModes.has('sound');
+      const needMeaning = canMeaning && !s.cleanModes.has('meaning');
+
+      const mode = needSound && !needMeaning ? 'sound'
+        : needMeaning && !needSound ? 'meaning'
+        : needSound && needMeaning ? (Math.random() < 0.5 ? 'sound' : 'meaning')
+        : canSound ? 'sound' : 'meaning';
       queue.push({ word: w, activity: 'recall', phase: 'slaughter', mode });
     }
   }
   return queue.slice(0, n);
+}
+
+/**
+ * REVIEW — only the words he has actually got wrong, worst first.
+ *
+ * The ordinary drill queue is fair to the whole list: it takes unseen words
+ * first, then the stalest. That is right for covering a mission and wrong for
+ * the night before a spelling test, when the useful thing is the eight words
+ * that keep collapsing and nothing else.
+ *
+ * Each word is re-taught before it is re-tested. Sending a word he just missed
+ * straight back into cold recall tests the same gap again and teaches nothing
+ * in between, which is how a review turns into a second helping of failure.
+ */
+export function reviewQueue(missionId, n = 10) {
+  const mission = missionById(missionId);
+  if (!mission) return [];
+
+  const ranked = mission.words
+    .map(w => ({ w, s: wordStatus(w.text) }))
+    .filter(x => x.s.misses > 0 && !x.s.slaughtered)
+    .sort((a, b) => (b.s.misses - a.s.misses) || (a.s.lastT - b.s.lastT));
+
+  const queue = [];
+  for (const { w, s } of ranked) {
+    if (queue.length >= n) break;
+    queue.push({ word: w, activity: 'spell', phase: 'review' });      // re-teach
+    if (queue.length < n) {
+      const mode = s.defSeen > 0 && (!speechAvailable() || Math.random() < 0.5)
+        ? 'meaning' : (speechAvailable() ? 'sound' : 'meaning');
+      queue.push({ word: w, activity: 'recall', phase: 'review', mode });
+    }
+  }
+  return queue.slice(0, n);
+}
+
+/** How many words in a mission currently have an unresolved miss against them. */
+export function missedCount(missionId) {
+  const mission = missionById(missionId);
+  if (!mission) return 0;
+  return mission.words.filter(w => {
+    const s = wordStatus(w.text);
+    return s.misses > 0 && !s.slaughtered;
+  }).length;
 }

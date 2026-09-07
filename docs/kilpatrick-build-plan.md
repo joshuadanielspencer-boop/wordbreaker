@@ -118,21 +118,57 @@ multi-column source leaves behind. Multisyllabic items are *built* from short
 ones by adding endings rather than scraped, because the OCR is least reliable
 on those pages and because building them is Kilpatrick's own advice.
 
-### Phase 3 — the teacher area (adult required)
+### Phase 3 — the teacher area (adult required) — partly built
 
 Its own section, visually distinct, never mixed into a solo session.
 
-| Activity | Why an adult | Notes |
+**Phase 3 was re-ordered before it was built, around one question: what does
+Gate 0 actually need?** The phase as originally written was a four-activity
+area plus a dashboard, and only about half of it turned out to be on the
+critical path. Two of the three baselines live in here and cannot be taken
+without it, which is the real reason this phase came next — not completeness.
+
+| Activity | Why an adult | Status |
 |---|---|---|
-| **The PAST** | phoneme judgements need an ear | The app *records* results, it does not administer. Entry form with a two-second automaticity timer. Seeds the skill model. |
-| **One Minute Activities** | phoneme manipulation is oral | Presenter drives the item and the two-second window; the adult taps automatic / correct / wrong. 2,856 clean items at Levels H–M in `activities.json`. |
-| **The Nonsense Ladder** | reading aloud must be heard | Adult scores each word 1 (letter-by-letter) / 2 (sounded then blended) / 3 (instant). A solo variant records audio for later review rather than scoring it. |
-| **Reading Aloud** | miscues must be heard | Every error logged with type. Kilpatrick's evidence is that correcting *every* error beats correcting only meaning-changing ones. |
+| **The PAST** | phoneme judgements need an ear | ✅ Built. The app *records* results, it does not administer. Entry form, two-second window, correct **and** automatic per level. |
+| **The Nonsense Ladder** | reading aloud must be heard | ✅ Built as the primary-outcome probe. Adult scores 1 (letter-by-letter) / 2 (sounded then blended) / 3 (instant). The solo audio-recording variant is not built. |
+| **The evidence view** | — | ✅ Built, last rather than first. A dashboard at n=0 is worse than none: trend lines through three points invite exactly the after-the-fact reinterpretation `predictions.md` exists to prevent. |
+| **One Minute Activities** | phoneme manipulation is oral | ⏳ Deferred. It is *intervention*, not measurement, and its own sequencing rule — start at D1 whatever the PAST says — means it does not depend on the Gate 0 result, so it blocks nothing. The `activities.json` item bank does not exist in the repo yet. |
+| **Reading Aloud** | miscues must be heard | ⏳ Deferred. Secondary outcome. Every error logged with type; Kilpatrick's evidence is that correcting *every* error beats correcting only meaning-changing ones. |
 
 Sequencing for One Minute Activities is Kilpatrick's, not invented: start at D1
 whatever the PAST says and climb one activity per level until he struggles;
 spend time only at F and above; advance after three or four consecutive
 automatic days.
+
+#### Two measurement defects found and fixed on the way in
+
+Both were live, and both were corrupting data every session he played.
+
+**1. The repo disagreed with itself about the primary outcome.**
+`predictions.md` says nonsense-word *decoding* — read aloud — with spelling as a
+secondary outcome. `nonsensedrills.js` said in a comment that dictation, which
+is spelling, was "the primary outcome variable for the whole project". Whichever
+had won by default, it would have been settled after the data arrived, which is
+the failure the pre-registration exists to prevent. `predictions.md` wins
+because it was written first; the comments now say so.
+
+**2. The instrument regulated away the thing it was measuring.**
+`currentPattern()` climbs a rung at 80% accuracy and drops one below 50% — an
+adaptive staircase, which by construction holds accuracy inside a band. The
+pre-registered threshold of a 20-point accuracy gain in nonsense spelling could
+therefore never have been observed, whichever branch was true. Practice and
+measurement are now separate: `js/core/probe.js` holds out 40% of the item pool
+by index (20% reading, 20% spelling, disjoint), serves a fixed composition of
+two items per pattern every time, and runs outside `runSession` so the
+session's own adaptations — easier items after a miss, early wind-down, a
+recovery item so nothing ends on a failure — cannot reach it.
+
+A third, smaller one: `dictationItems()` fell back to the full pattern list when
+a rung's unused pool ran short, silently re-serving spent words. It degraded
+first and hardest on the patterns he had drilled most, which are exactly the
+ones that matter. It now falls to a neighbouring rung instead, and samples
+without replacement so one session cannot serve the same nonsense word twice.
 
 ### Phase 4 — word study enrichment (solo)
 
@@ -164,6 +200,9 @@ Make it Boring and the Phase 1/2/4 drills become **blocks inside a session**,
 scheduled like any other activity, rather than separate destinations. This also
 gets them practised regularly instead of only when chosen.
 
+**Teacher** is built and cost no new home-screen entry: it replaced the old
+Progress button, which now lives inside it.
+
 ---
 
 ## The evidence view
@@ -181,6 +220,13 @@ under good instruction? A dedicated view in the teacher area tracks it:
 so the result cannot be reinterpreted afterwards. Fast movement in weeks
 supports the habit reading; flat nonsense-word decoding despite automatic PAST
 levels points at rapid naming or working memory and argues for a CTOPP-2.
+
+Built, with the pre-registered thresholds printed next to the numbers rather
+than recalled from memory, and compliance printed next to the outcome rather
+than on another screen — `predictions.md` names session frequency as a confound,
+and a confound on a different screen is a confound that gets forgotten at the
+moment of interpretation. Oral-reading miscues are the one listed measure not
+yet collected, because Reading Aloud is deferred.
 
 ---
 

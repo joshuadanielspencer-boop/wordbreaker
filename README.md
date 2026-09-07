@@ -19,7 +19,7 @@ For the iPad, build the single-file version and put it wherever you like
 node tools/bundle.mjs
 ```
 
-That writes `dist/wordbreaker.html` — one file, no imports, no server, ~127 KB.
+That writes `dist/wordbreaker.html` — one file, no imports, no server, ~410 KB.
 `--artifact` writes `dist/wordbreaker.body.html` instead, for hosts that supply
 their own document skeleton.
 
@@ -115,6 +115,10 @@ js/core/mission.js    per-word slaughter status and drill ordering
 js/core/speech.js     browser voices — spelling strand only
 js/ui/story.js        chapter unlock flow and library
 js/ui/codex.js        the collection he is building
+js/core/probe.js      held-out measurement items; practice may never touch these
+js/core/past.js       PAST administrations, recorded by an adult
+js/activities/ladder.js  nonsense words read aloud, scored 1/2/3 by an adult
+js/ui/teacher.js      the teacher area and the evidence view
 tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs,
                       gen-pseudo.mjs, gen-notes.mjs
 ```
@@ -264,6 +268,14 @@ Each word runs through three stages, each giving away less than the last:
    - **from the sound** — the word read aloud, which is what a real spelling
      test actually is
 
+**The definition is taught before it is tested.** Cold recall's meaning mode
+prompts with the definition and asks him to produce the word, and for a long
+time that definition appeared on no other screen in the app — so the "spelling
+test" was partly a guess at a sentence nobody had shown him. The definition now
+appears on the autopsy reveal and throughout look-cover-write, with the word
+still on screen, and `mission.js` will not schedule meaning-mode recall for a
+word until that has actually happened. Until it has, only sound mode is offered.
+
 The third stage exists because neither of the others can test spelling, however
 they are dressed up. Look-cover-write hides the word for about three seconds,
 so passing it demonstrates working memory. Word Equation lays out
@@ -279,19 +291,30 @@ invented words in the transfer test, so nothing outside Spelling Slaughter
 touches it.
 
 Hearing the word is the authentic prompt for a spelling test, not a shortcut —
-but only in the right place. Audio appears:
+but only in the right place. Audio appears, always as a **replayable button**
+rather than a single reading that cannot be repeated:
 
 - as the **dictation prompt** for cold recall, where replaying is free because
   it *is* the prompt
 - on the **autopsy reveal**, where the word is already on screen, so hearing it
   costs nothing and links spelling to sound
-- during the **study** phase of look-cover-write
+- throughout look-cover-write, **including after the cover**, while he is
+  writing from memory
+- on the **cold recall reveal**, in both modes, once the answer is locked in
 
-It deliberately does not appear as a hint inside meaning-mode recall, and not
-after the cover in look-cover-write. In both places it would be an uncounted
-substitute for a counted one, and it would flatten the hint ladder — "say the
-word" gives away far more than either existing rung, so it would become the
-only hint ever used.
+It appears after the cover because look-cover-write is *practice* and certifies
+nothing — only cold recall gates mission progress — so audio there costs no
+evidence, and being unable to re-hear a word you are trying to write is an
+obstacle with no teaching in it. It appears on the recall reveal because by then
+it cannot help him produce anything, and hearing the word beside the spelling he
+just committed to is the moment sound and letters are most worth connecting.
+
+There is exactly one place it is still refused: **as a prompt inside
+meaning-mode cold recall.** A word counts as slaughtered only when produced by
+both routes, and a "say it" button there would turn meaning mode into sound
+mode and collapse the two-route requirement into one. It would also flatten the
+hint ladder — "say the word" gives away far more than either existing rung, so
+it would become the only hint ever used.
 
 Instead each mode's first hint is **the other mode's prompt**: dictation offers
 the definition, meaning offers the piece meanings. Then a skeleton showing only
@@ -338,6 +361,72 @@ The plan also adapts as it runs:
 - a session never finishes on a miss.
 - a run going well is *offered* four more, never given them.
 
+### The Teacher area, and why measurement is kept apart from practice
+
+Behind **Teacher** on the home screen: the activities that need an adult's ear,
+and the evidence view. It is visually distinct and never mixed into a solo
+session — a screen full of his own scores, wearing the same clothes as the
+game, would put a running total in front of him, which the rest of the design
+exists to avoid.
+
+The organising idea is **Gate 0**. `docs/predictions.md` pre-registers two rival
+readings of the same child and fixes the thresholds that separate them, and
+every one of those thresholds is a *change from baseline*. Until a baseline
+exists, none of the branch logic means anything — it is a decision procedure
+with no input. So the first thing the Teacher screen does is say which of the
+three baselines have been taken and which have not.
+
+**Practice cannot measure itself.** The nonsense drills climb a ladder that
+adapts to how he is doing — up a rung at 80% accuracy, down one below 50%. That
+is good teaching and a useless instrument, because it holds accuracy inside a
+band whichever way he is actually moving; an accuracy trend out of it would be
+roughly flat under both hypotheses. Growth shows up there as the *rung reached*,
+never as the score. So measurement gets its own pool and its own rules, in
+`js/core/probe.js`:
+
+- **Fixed composition.** Two items from each of the six patterns, easiest
+  first, every single time. Difficulty never adapts, so a change in the number
+  is a change in him.
+- **Reserved items.** 40% of the 1,963 nonsense words are held out by index —
+  20% for reading, 20% for spelling, with no overlap. Practice can never serve
+  one, and the two probe kinds can never serve each other's. Reading a word
+  aloud in week 2 and being asked to spell it in week 5 would make the week 5
+  number a memory test.
+- **Never reused**, which `predictions.md` requires.
+- **Its own runner.** Probes deliberately do not go through `runSession`, which
+  injects easier items after a repeated miss, winds down early on a bad run and
+  appends a recovery item so nothing ends on a failure. All of that is right for
+  practice and fatal to a measurement: a probe that quietly got easier when he
+  struggled would report a flat line whatever happened.
+- **All or nothing.** An abandoned probe is discarded rather than half-saved. A
+  partial probe is not comparable to a whole one, and storing it would poison
+  the series it is compared against.
+
+The **primary outcome is nonsense-word decoding** — reading them aloud, scored
+by an adult as 3 instant / 2 sounded-then-blended / 1 letter-by-letter. The
+3-versus-2 distinction *is* the measurement: Branch A predicts taught patterns
+come to be read as whole units and Branch B predicts he is still assembling
+them, and plain accuracy cannot separate those, because a child who laboriously
+decodes every word correctly scores 100% under both. Nonsense-word *spelling*
+(the dictation probe) is a secondary outcome and the only one that runs solo.
+
+Do not be tempted to score the reading probe with speech recognition. Every
+engine available is language-model driven, so it will hear `splonter` and write
+down `splinter`, turning the most diagnostic item in the battery into a false
+pass. The reason nonsense words measure anything is that they cannot be
+recognised, and an ASR is a recogniser.
+
+The **PAST** is recorded, never administered — the app shows an entry form and
+a two-second window, and an adult runs the test from the book. Both *correct*
+and *automatic* are recorded, because the gap between them is Kilpatrick's whole
+argument: correct-but-slow is a skill that is not yet automatic, which is a
+different finding, a different prediction and a different next test from not
+having the skill.
+
+The evidence view prints compliance next to the outcome rather than on another
+screen, because `predictions.md` names it as a confound: a flat result at three
+sessions a week means something and at three a fortnight means nothing.
+
 ## Deploying
 
 Pushing to `main` runs `.github/workflows/pages.yml`, which gates on
@@ -351,11 +440,16 @@ must never reach the deployed site.
   keyboard-scorable decoding tasks and both need spoken pseudowords. Browser
   TTS mangles nonsense words, so this needs pre-generated audio files shipped
   with the app, not runtime synthesis.
-- **The oral block.** Record-don't-score: he reads a short list aloud, the app
-  stores clips against item ids, he self-rates against a model pronunciation
-  and you skim the clips later. Do not use ASR to score pseudowords — Whisper
-  and browser speech recognition are language-model driven and will "correct"
-  `splonter` to `splinter`, failing hardest on the most diagnostic task.
+- **The rest of the oral block.** The Nonsense Ladder is built and adult-scored;
+  what is still missing is the solo variant that records clips against item ids
+  for later review, and the Reading Aloud miscue log. Do not use ASR to score
+  pseudowords — Whisper and browser speech recognition are language-model driven
+  and will "correct" `splonter` to `splinter`, failing hardest on the most
+  diagnostic task.
+- **One Minute Activities.** The presenter is designed but the item bank does
+  not exist in the repo yet. It is intervention rather than measurement, and
+  its own sequencing rule — start at D1 whatever the PAST says — means it does
+  not depend on the Gate 0 result, so it was not on the critical path.
 - **Pseudoword generation** from onset/nucleus/coda inventories, with a
   real-word exclusion and a profanity blocklist.
 - **Drawing and annotation**, saved into the Codex cards.

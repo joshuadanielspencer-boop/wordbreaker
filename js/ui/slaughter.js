@@ -1,9 +1,9 @@
 // SPELLING SLAUGHTER — mission list and word board.
 
-import { allMissions, missionProgress, wordStatus } from '../core/mission.js';
+import { allMissions, missionProgress, wordStatus, missedCount } from '../core/mission.js';
 import { missionById } from '../content/lexicon.js';
 
-export function renderSlaughter(app, { onBack, onDrill }) {
+export function renderSlaughter(app, { onBack, onDrill, onReview }) {
   window.scrollTo(0, 0);
   const missions = allMissions();
 
@@ -30,13 +30,16 @@ export function renderSlaughter(app, { onBack, onDrill }) {
 
   app.querySelector('[data-act="back"]').onclick = onBack;
   app.querySelectorAll('.mission-card').forEach(b =>
-    b.onclick = () => renderMission(app, b.dataset.id, { onBack: () => renderSlaughter(app, { onBack, onDrill }), onDrill }));
+    b.onclick = () => renderMission(app, b.dataset.id, {
+      onBack: () => renderSlaughter(app, { onBack, onDrill, onReview }), onDrill, onReview,
+    }));
 }
 
-export function renderMission(app, id, { onBack, onDrill }) {
+export function renderMission(app, id, { onBack, onDrill, onReview }) {
   window.scrollTo(0, 0);
   const mission = missionById(id);
   const { done, total, pct } = missionProgress(mission);
+  const missed = missedCount(id);
 
   const groups = mission.groups.map((g, gi) => ({
     label: g.label,
@@ -58,20 +61,24 @@ export function renderMission(app, id, { onBack, onDrill }) {
       <div class="slaughter-grid">${g.words.map(w => {
         const s = wordStatus(w.text);
         const state = s.slaughtered ? 'done' : s.cleanDays.size ? 'close' : s.seen ? 'started' : '';
-        return `<div class="slaughter-word ${state}">
+        return `<div class="slaughter-word ${state}${s.misses ? ' missed' : ''}">
           <b>${w.display}</b>
           <span class="sw-parts">${w.parts.map(p => p.surface).join('·')}</span>
           <span class="sw-state">${s.slaughtered ? 'slaughtered'
-            : s.cleanDays.size ? 'one clean spell' : s.seen ? `seen ${s.seen}×` : 'untouched'}</span>
+            : s.cleanDays.size ? 'one clean spell' : s.seen ? `seen ${s.seen}×` : 'untouched'}${
+            s.misses ? ` · ${s.misses} miss${s.misses === 1 ? '' : 'es'}` : ''}</span>
         </div>`;
       }).join('')}</div>`).join('')}
     <div class="homegrid" style="margin-top:20px">
       ${done < total
         ? `<button class="btn primary big" data-act="drill">Start the slaughter</button>`
         : `<p class="msg good">Every word in this mission is finished.</p>`}
+      ${missed ? `<button class="btn big" data-act="review">Review the misses &nbsp;·&nbsp; ${missed} word${missed === 1 ? '' : 's'}</button>` : ''}
     </div>`;
 
   app.querySelector('[data-act="back"]').onclick = onBack;
   const d = app.querySelector('[data-act="drill"]');
   if (d) d.onclick = () => onDrill(mission.id);
+  const rv = app.querySelector('[data-act="review"]');
+  if (rv && onReview) rv.onclick = () => onReview(mission.id);
 }

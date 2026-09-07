@@ -156,9 +156,9 @@ export function planSession({ items = 14, maxLevel = 5 } = {}) {
     }
   }
 
-  // Nonsense-word work: two dictation items and one sound hunt. Dictation is
-  // the primary outcome variable, so it runs every session without exception —
-  // a measure taken only when convenient is not a measure.
+  // Nonsense-word work: two dictation items and one sound hunt. This is
+  // practice on an adaptive ladder, NOT the measurement — see probe.js for
+  // that. It runs every session because the practice is the intervention.
   const nonsense = [...dictationItems(2), ...soundHuntItems(1)];
   nonsense.forEach((it, k) => {
     const at = Math.min(seq.length, 4 + k * 4);

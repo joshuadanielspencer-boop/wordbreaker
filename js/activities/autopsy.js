@@ -110,7 +110,7 @@ export function mount(el, word, opts = {}) {
 
       releaseKeys();
       reveal(exact);
-      resolve({ correct: exact, ms, credit, detail: { cuts: [...cuts], attempts } });
+      resolve({ correct: exact, ms, credit, detail: { cuts: [...cuts], attempts, defShown: !!word.def } });
     }
 
     function markNearMisses() {
@@ -185,6 +185,13 @@ export function mount(el, word, opts = {}) {
           `${missed.length === 1 ? 'One seam' : `${missed.length} seams`} went unmarked.`);
         if (!cuts.size) bits.push(`This word is ${word.parts.length} pieces, not one.`);
         why = `<p class="msg reason">${bits.join(' ')}</p>`;
+      }
+
+      // Curriculum words carry a definition, and cold recall will later prompt
+      // with it. Showing it on the reveal — word on screen, pieces glossed — is
+      // where it gets taught, so the later test is spelling rather than a guess.
+      if (word.def) {
+        stage.insertAdjacentHTML('afterend', `<p class="definition studydef">${word.def}</p>`);
       }
 
       const ctx = correct ? (word.level >= 4 ? 'correctBig' : 'correct') : 'errorAutopsy';

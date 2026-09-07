@@ -25,6 +25,19 @@
 //
 // Hints are a ladder, and each rung is counted but never scolded. What matters
 // is not whether he needed one today; it is that he needs fewer over time.
+//
+// Audio placement is deliberate and asymmetric:
+//
+//   sound mode   — replay is unlimited and free. It IS the prompt, so re-hearing
+//                  it gives away nothing that the first playing did not.
+//   meaning mode — no audio BEFORE the answer, at any price. A word only counts
+//                  as slaughtered once it has been produced by both routes, and
+//                  a "say it" button here would turn meaning mode into sound
+//                  mode and quietly collapse the two-route requirement into one.
+//   both modes   — audio on the REVEAL, after the answer is locked in. By then
+//                  it cannot help him produce anything, and hearing the word
+//                  next to the spelling he just committed to is the moment the
+//                  sound and the letters are most worth connecting.
 
 import { MORPH } from '../content/lexicon.js';
 import { say } from '../voice/voice.js';
@@ -146,8 +159,13 @@ export function mount(el, word, opts = {}) {
       feedback.innerHTML = why + `<p class="msg ${ok ? 'good' : 'gentle'}">${
         say(ok ? (clean ? 'recallClean' : 'recallRight') : 'recallWrong',
             { word: shown, hints }, opts.personality)}</p>`;
+      // Audio arrives here even in meaning mode — the answer is already locked,
+      // so it teaches without being able to prompt.
       el.querySelector('.actions').innerHTML =
-        `<button class="btn primary" data-act="next">Next</button>`;
+        `${speechAvailable() ? `<button class="btn ghost speak" data-act="say" aria-label="hear the word">🔊</button>` : ''}
+         <button class="btn primary" data-act="next">Next</button>`;
+      const sayBtn = el.querySelector('[data-act="say"]');
+      if (sayBtn) sayBtn.onclick = () => speak(target);
       el.querySelector('[data-act="next"]').focus();
       resolve({ correct: ok, ms, credit, detail: { given, hints, attempts, clean, mode, plays } });
     }

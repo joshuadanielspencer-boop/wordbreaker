@@ -8,6 +8,19 @@
 // Peeks are counted and never punished. How much support a word still needs is
 // the useful measurement — a word spelled correctly after three peeks is not
 // the same as one spelled correctly cold, and only the peek count knows.
+//
+// The DEFINITION is shown here, during study. That is not decoration: cold
+// recall later prompts with the definition alone and asks him to produce the
+// word, and for a long time this was the only screen in the app where that
+// definition appeared — meaning he was asked to produce a word from a sentence
+// nobody had ever shown him. Meeting the definition while the word is still on
+// screen is what makes the later test a spelling test instead of a guess.
+// mission.js will not schedule meaning-mode recall until this has happened.
+//
+// Audio stays available AFTER the cover. Look-cover-write is practice and
+// certifies nothing — mission.js only counts cold recall — so hearing the word
+// here costs no evidence, and being unable to re-hear a word you are trying to
+// write is just an obstacle with no teaching in it.
 
 import { MORPH } from '../content/lexicon.js';
 import { say } from '../voice/voice.js';
@@ -18,6 +31,9 @@ export function mount(el, word, opts = {}) {
     const started = performance.now();
     let peeks = 0;
     let attempts = 0;
+    let plays = 0;
+    const canSpeak = speechAvailable();
+    const defShown = !!word.def;
 
     const chips = word.parts.map(p => {
       const m = MORPH[p.m];
@@ -31,9 +47,10 @@ export function mount(el, word, opts = {}) {
         <div class="wordstage revealed spellstage">
           <div class="cmp-chips built">${chips}</div>
         </div>
+        ${word.def ? `<p class="definition studydef">${word.def}</p>` : ''}
         <div class="feedback" aria-live="polite"></div>
         <div class="actions">
-          ${speechAvailable() ? `<button class="btn ghost speak" data-act="speak" aria-label="hear the word">🔊</button>` : ''}
+          ${canSpeak ? `<button class="btn ghost speak" data-act="speak" aria-label="hear the word">🔊</button>` : ''}
           <button class="btn primary" data-act="cover">Cover it</button>
         </div>
       </div>`;
@@ -41,17 +58,27 @@ export function mount(el, word, opts = {}) {
     const stage = el.querySelector('.spellstage');
     const feedback = el.querySelector('.feedback');
     el.querySelector('[data-act="cover"]').onclick = cover;
-    const studySpeak = el.querySelector('[data-act="speak"]');
-    if (studySpeak) studySpeak.onclick = () => speak(word.text);
+
+    const play = () => { plays++; speak(word.text); el.querySelector('.answer')?.focus(); };
+    const wireSpeak = () => {
+      const b = el.querySelector('[data-act="speak"]');
+      if (b) b.onclick = play;
+    };
+    wireSpeak();
 
     function cover() {
       stage.classList.add('covered');
       // NEVER put the word in the prompt. It was there once, which left the
       // answer on screen for the whole of the phase that is supposed to hide it.
       el.querySelector('.prompt').textContent = 'Now write it from memory.';
+      // The definition stays up. It does not spell anything, and it is the
+      // prompt he will face in cold recall, so pairing it with the effort of
+      // writing the word is the whole point of showing it.
       el.querySelector('.actions').innerHTML = `
+        ${canSpeak ? `<button class="btn ghost speak" data-act="speak" aria-label="hear the word again">🔊</button>` : ''}
         <button class="btn ghost" data-act="peek">Peek</button>
         <button class="btn primary" data-act="go">Check it</button>`;
+      wireSpeak();
       stage.insertAdjacentHTML('afterend',
         `<input class="answer" type="text" inputmode="text" autocapitalize="off"
                 autocomplete="off" autocorrect="off" spellcheck="false"
@@ -118,9 +145,11 @@ export function mount(el, word, opts = {}) {
         say(ok ? (clean ? 'spellClean' : 'spellRight') : 'spellWrong',
             { word: word.display || word.text, peeks }, opts.personality)}</p>`;
       el.querySelector('.actions').innerHTML =
-        `<button class="btn primary" data-act="next">Next</button>`;
+        `${canSpeak ? `<button class="btn ghost speak" data-act="speak" aria-label="hear the word">🔊</button>` : ''}
+         <button class="btn primary" data-act="next">Next</button>`;
+      wireSpeak();
       el.querySelector('[data-act="next"]').focus();
-      resolve({ correct: ok, ms, credit, detail: { given, peeks, attempts, clean } });
+      resolve({ correct: ok, ms, credit, detail: { given, peeks, attempts, clean, plays, defShown } });
     }
   });
 }

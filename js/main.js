@@ -5,9 +5,9 @@ import {
 } from './core/store.js';
 import { initSpeech } from './core/speech.js';
 import { planSession, recoveryItem, itemsForMorpheme, encoreItems } from './core/scheduler.js';
-import { record, level, LEVEL, LEVEL_NAME, weakest, entry as mastEntry } from './core/mastery.js';
+import { record, level, LEVEL } from './core/mastery.js';
 import { push as logPush } from './core/log.js';
-import { MORPH, collectableMorphemes, drillableMorphemes, originLabel } from './content/lexicon.js';
+import { MORPH, collectableMorphemes, originLabel } from './content/lexicon.js';
 import { say, reward } from './voice/voice.js';
 import { mount as autopsy } from './activities/autopsy.js';
 import { mount as equation } from './activities/equation.js';
@@ -21,18 +21,22 @@ import { mount as ransom } from './activities/ransom.js';
 import { mount as spellout } from './activities/spellout.js';
 import { mount as dictation } from './activities/dictation.js';
 import { mount as soundhunt } from './activities/soundhunt.js';
-import { makeProblem, pickSkill, SKILLS, LADDER } from './content/math.js';
+import { mount as ladder } from './activities/ladder.js';
+import { makeProblem, pickSkill } from './content/math.js';
 import { renderCodex } from './ui/codex.js';
 import { renderRadar } from './ui/radar.js';
 import { renderBoring } from './ui/boring.js';
 import { renderChapter, renderLibrary, chapterOwed, gateWordFor, markUnlocked, unlockedCount } from './ui/story.js';
 import { CHAPTERS } from './content/story.js';
 import { renderSlaughter } from './ui/slaughter.js';
-import { drillQueue, allMissions, missionProgress } from './core/mission.js';
+import { renderTeacher } from './ui/teacher.js';
+import { probeItems, PROBE_LABEL, DECODING } from './core/probe.js';
+import { recordPast } from './core/past.js';
+import { drillQueue, reviewQueue, allMissions, missionProgress } from './core/mission.js';
 import { missionById } from './content/lexicon.js';
 import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
-const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell, recall, impostor, ransom, spellout, dictation, soundhunt };
+const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell, recall, impostor, ransom, spellout, dictation, soundhunt, ladder };
 const PERSONALITIES = ['normal', 'funny', 'ridiculous', 'unsupervised'];
 const app = document.getElementById('app');
 
@@ -217,7 +221,7 @@ function home() {
     </div>
     <div class="stats" style="margin-top:10px">
       <button class="btn ghost" data-act="personality">Computer: ${S.settings.personality}</button>
-      <button class="btn ghost" data-act="parent">Progress</button>
+      <button class="btn ghost" data-act="parent">Teacher</button>
     </div>
     ${sessionsSinceBackup() >= 10 ? `
       <p class="msg plainmsg backup-nudge">${S.sessions.length} sessions and no backup.
@@ -226,7 +230,7 @@ function home() {
 
   app.querySelector('[data-act="start"]').onclick = () => runSession();
   app.querySelector('[data-act="codex"]').onclick = () => renderCodex(app, { onBack: home });
-  app.querySelector('[data-act="parent"]').onclick = parentView;
+  app.querySelector('[data-act="parent"]').onclick = teacherView;
   const backup = app.querySelector('[data-act="backup"]');
   if (backup) backup.onclick = () => download(exportProfile(), S.name).then(home);
   app.querySelector('[data-act="math"]').onclick = runMath;
@@ -481,7 +485,25 @@ function summary(plan, correct, newlyMet) {
 }
 
 function openSlaughter() {
-  renderSlaughter(app, { onBack: home, onDrill: runSlaughter });
+  renderSlaughter(app, { onBack: home, onDrill: runSlaughter, onReview: runReview });
+}
+
+/**
+ * Only the words he has actually got wrong. Each is re-taught before it is
+ * re-tested — sending a word straight back into cold recall after a miss tests
+ * the same gap again with nothing in between, which is a second helping of
+ * failure rather than a review.
+ */
+function runReview(missionId) {
+  const seq = reviewQueue(missionId, 10);
+  if (!seq.length) return openSlaughter();
+  return runSession({
+    targets: [...new Set(seq.flatMap(s => s.word.morphemes))],
+    seq,
+    opener: 'slaughterOpen',
+    mission: missionId,
+    onDone: openSlaughter,
+  });
 }
 
 /**
@@ -560,45 +582,121 @@ function offerEncore(S) {
   });
 }
 
-// ------------------------------------------------------------- parent view
-function parentView() {
+// ------------------------------------------------------------ teacher area
+function teacherView() {
   const S = load();
   toTop();
-  const teach = drillableMorphemes().map(m => m.id);
-  const worst = weakest(teach, 12);
-  const sessions = S.sessions.slice(-10).reverse();
+  renderTeacher(app, {
+    onBack: home,
+    onRunProbe: runProbe,
+    onSavePast: (levels, note) => { recordPast(levels, note); teacherView(); },
+    onExport: () => download(exportProfile(), S.name),
+    onReset: () => {
+      if (confirm(`Wipe all of ${S.name}'s progress? This cannot be undone.`)) {
+        resetProfile(); home();
+      }
+    },
+  });
+}
+
+/**
+ * Run one probe. This deliberately does NOT go through runSession.
+ *
+ * runSession is a good teacher and a terrible instrument: it injects easier
+ * items after a repeated miss, winds the session down early on a bad run,
+ * appends a recovery item so nothing ends on a failure, and offers four more
+ * when things go well. Every one of those is right for practice and fatal to a
+ * measurement — they change the item set in response to how he is doing, which
+ * is exactly the confound the fixed composition exists to remove. A probe that
+ * quietly got easier when he struggled would report a flat line whatever
+ * happened, which is the same defect the adaptive practice ladder has.
+ *
+ * So: no adaptation, no rewards, no voice, no early exit. Same twelve slots
+ * every time, and the run is discarded rather than half-saved if it is
+ * abandoned partway — a partial probe is not comparable to a whole one, and
+ * silently storing one would poison the series it is compared against.
+ */
+async function runProbe(kind) {
+  const S = load();
+  const seq = probeItems(kind);
+  if (!seq.length) {
+    alert('The held-out pool for this probe is exhausted. Regenerate items with tools/gen-nonsense.mjs before running it again.');
+    return teacherView();
+  }
+
+  const records = [];
+  let aborted = false;
+
+  for (let i = 0; i < seq.length; i++) {
+    const step = seq[i];
+    app.innerHTML = `
+      <div class="topbar teacher-bar">
+        <button class="btn ghost" data-act="quit">Abandon</button>
+        <div class="spacer"></div>
+        <span class="pill teacher-pill">${PROBE_LABEL[kind]} · ${i + 1} / ${seq.length}</span>
+      </div>
+      <div id="stage"></div>`;
+    // Cancelling the confirm must leave the probe RUNNING. Setting the flag
+    // before asking killed the run either way: the screen stayed up, the next
+    // button did nothing, and the probe was silently dead with no way to tell.
+    app.querySelector('[data-act="quit"]').onclick = () => {
+      if (!confirm('Abandon this probe? Nothing will be recorded — a partial probe is not comparable to a whole one.')) return;
+      aborted = true;
+      teacherView();
+    };
+
+    const res = await ACTIVITIES[step.activity](
+      document.getElementById('stage'), step,
+      { personality: S.settings.personality });
+    if (aborted) return;
+
+    records.push({
+      activity: kind,
+      item: step.word.id,
+      correct: res.correct,
+      ms: Math.round(res.ms),
+      credit: {},
+      detail: { ...res.detail, target: step.word.text, pattern: step.pattern, probeId: step.probeId },
+      phase: 'probe',
+    });
+
+    await new Promise(r => {
+      const b = app.querySelector('[data-act="next"]');
+      if (b) b.addEventListener('click', r, { once: true });
+      else setTimeout(r, 400);
+    });
+    if (aborted) return;
+  }
+
+  // Written only once the whole probe is done, for the reason above.
+  records.forEach(logPush);
+  flush();
+  probeSummary(kind, records);
+}
+
+function probeSummary(kind, records) {
+  toTop();
+  const correct = records.filter(r => r.correct).length;
+  const scored = records.map(r => r.detail?.score).filter(Boolean);
+  const instant = scored.filter(s => s === 3).length;
 
   app.innerHTML = `
-    <div class="topbar">
-      <button class="btn ghost" data-act="back">Back</button>
-      <div class="spacer"></div>
-      <button class="btn ghost" data-act="export">Export</button>
-      <button class="btn ghost danger" data-act="reset">Reset</button>
+    <div class="topbar teacher-bar"><span class="pill teacher-pill">${PROBE_LABEL[kind]}</span></div>
+    <div class="hero teacher-hero">
+      <h1 style="font-size:40px">${correct} / ${records.length}</h1>
+      <p>Recorded. ${kind === DECODING && scored.length
+        ? `${instant} of ${scored.length} read as whole units.` : ''}</p>
     </div>
-    <div class="section-title">${esc(S.name)} — error fingerprint, weakest pieces</div>
-    ${worst.length ? `<div class="family">${worst.map(w =>
-      `<span>${MORPH[w.id].canonical} · ${Math.round(w.s * 100)}% · n=${w.n}</span>`).join('')}</div>`
-      : '<p class="msg plainmsg">No data yet.</p>'}
-    <div class="section-title">recent sessions</div>
-    ${sessions.length ? sessions.map(s =>
-      `<p class="msg plainmsg" style="text-align:left">${new Date(s.started).toLocaleDateString()} — ${s.correct}/${s.items} · ${Math.round((s.ended - s.started) / 60000)} min</p>`).join('')
-      : '<p class="msg plainmsg">No sessions yet.</p>'}
-    <div class="section-title">show the middle</div>
-    <div class="family">${LADDER.map(id => {
-      const e = mastEntry(id);
-      return `<span>${SKILLS[id].name}: ${e.n ? LEVEL_NAME[level(id)] + ` (n=${e.n})` : 'not tried'}</span>`;
-    }).join('')}</div>
-    <div class="section-title">mastery spread</div>
-    <div class="family">${[0, 1, 2, 3, 4].map(l =>
-      `<span>${LEVEL_NAME[l]}: ${teach.filter(id => level(id) === l).length}</span>`).join('')}</div>`;
-
-  app.querySelector('[data-act="back"]').onclick = home;
-  app.querySelector('[data-act="export"]').onclick = () => download(exportProfile(), S.name);
-  app.querySelector('[data-act="reset"]').onclick = () => {
-    if (confirm(`Wipe all of ${S.name}'s progress? This cannot be undone.`)) {
-      resetProfile(); home();
-    }
-  };
+    <p class="msg plainmsg fineprint">
+      One probe is a point, not a trend. The comparison that means something is
+      against the baseline, on the evidence screen.
+    </p>
+    <div class="homegrid" style="margin-top:22px">
+      <button class="btn primary big" data-act="evidence">See the evidence</button>
+      <button class="btn big" data-act="done">Done</button>
+    </div>`;
+  app.querySelector('[data-act="done"]').onclick = teacherView;
+  app.querySelector('[data-act="evidence"]').onclick = teacherView;
 }
 
 loadRoot();

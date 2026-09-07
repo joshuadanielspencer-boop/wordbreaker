@@ -23,6 +23,7 @@ function blankProfile(name, avatar) {
     sessions: [],       // { started, ended, items, correct }
     streak: { count: 0, lastDay: null },
     rewards: [],        // reward lines already shown, so they don't repeat
+    past: [],           // PAST administrations, entered by an adult
   };
 }
 
