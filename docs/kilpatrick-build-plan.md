@@ -1,0 +1,179 @@
+# Kilpatrick build plan
+
+How *Equipped for Reading Success* gets built into this app. Companion to the
+source integration plan (kept with the book transcription, outside this repo);
+this file is the engineering half — what gets built, in what order, what each
+thing measures, and which pieces cannot run without an adult.
+
+Learner-specific detail stays in `NOTES.private.md`, which is gitignored.
+
+---
+
+## The two constraints that shape everything
+
+**1. Solo-first.** The learner uses this alone most days. Four of Kilpatrick's
+six baseline measures and the whole of his phonemic-awareness core need a human
+ear — they cannot be scored by software, and speech recognition is not an
+option because it is language-model driven and will "correct" a nonsense word
+into a real one. Those activities are built, but they are marked `teacher: true`
+and live in their own area. They accumulate data at whatever rate an adult sits
+down with him, which is a planning fact, not a detail: **anything that must run
+weekly has to work solo.**
+
+**2. Short enough that he opens it.** Kilpatrick's own remedial template is
+blocks of 30 seconds to 3 minutes, nothing longer, under 20 minutes total. That
+matches this app's existing shape, so new work arrives as *blocks that can join
+a session* rather than as more buttons on the home screen. The home screen is
+already close to full; a wall of twelve entries would be worse than any single
+activity is good.
+
+---
+
+## What is already covered
+
+Kilpatrick's Chapter 6 word-study techniques map onto things this app does:
+
+| Technique | Where it already lives |
+|---|---|
+| #16 word structure analysis | Word Autopsy |
+| #10 oral spelling (sequence under time) | Spelling Slaughter — look/cover/write |
+| #12/14 nonsense-word work | The Word That Does Not Exist (morphological only) |
+| #1/#4 introduce orally, then map to print | Spelling Slaughter drill order |
+| every-error feedback | error comparison rows across all activities |
+
+The gap is everything phonological: he has never been asked to manipulate a
+sound, and the app has never measured whether he can do it quickly.
+
+---
+
+## Build order
+
+Phased by *what accumulates evidence fastest*, not by what is most interesting.
+
+### Phase 1 — anti-compensation (solo)
+
+Kilpatrick's Chapter 6 §19–24 exist to make guessing impossible. They are the
+best match in the book to the habit hypothesis, they are trivial to build, and
+their strangeness reads as a puzzle rather than as remediation.
+
+| Activity | Technique | What it defeats | Measures |
+|---|---|---|---|
+| **Impostor Row** | §5 look-alike words | first-letter cue, word shape, length | discrimination accuracy + time |
+| **Ransom Note** | §20–24 distorted text | word shape, whole-word recognition | accuracy per distortion type |
+| **Spell It Out** | #11 oral decoding | everything visual | orthographic memory |
+
+Look-alike sets are **generated**, not transcribed: Appendix G's OCR is wrecked
+by its two-column layout, and Kilpatrick says outright the printed sets are
+"just samples, you can create your own." Generating from the corpus by edit
+distance gives better control over difficulty and unlimited material.
+
+Ransom Note is also diagnostic. Kilpatrick notes that a learner who *cannot*
+adjust to distorted text probably lacks letter-sound or phoneme skills — so
+failure here is itself a signal that pushes toward Phase 3.
+
+### Phase 2 — nonsense words (solo, and the primary outcome)
+
+Nonsense words are the only material where recognition is structurally
+unavailable, which makes them both the best practice and the best measure.
+
+- **Nonsense Dictation** — the voice says it, he types it. Scored
+  *phonetically*: any spelling that would be pronounced the same is correct
+  (`fraib` for `frabe`), because the point is the sound-to-letter mapping, not
+  the arbitrary spelling. This is Kilpatrick §2.3 and it is cheap, sensitive,
+  and fully solo.
+- **Sound Hunt** — phoneme-to-grapheme mapping (#2). A sound plays; he picks
+  the grapheme from up to five tiles, including "none of these". Progresses
+  letters → digraphs → vowel teams → blends → rime units → suffixes.
+
+**Main technical risk: the phonetic scorer.** Accepting `fraib` for `frabe`
+needs grapheme-to-phoneme rules. This is tractable only because Appendix H
+words are phonically regular by construction — a rule-based converter covering
+CVC, blends, digraphs, silent-e, vowel teams and r-controlled is enough. It
+will not generalise to real English and should not be used outside this
+activity.
+
+Source material: Appendix H yields ~2,000 candidates after filtering. It needs
+a cleaning pass — the multi-column OCR leaves debris (`bdloar`, `aoe`), and the
+system dictionary wrongly rejects legitimate items, so real-word filtering has
+to be done against a modern word list, not `/usr/share/dict/words`.
+
+### Phase 3 — the teacher area (adult required)
+
+Its own section, visually distinct, never mixed into a solo session.
+
+| Activity | Why an adult | Notes |
+|---|---|---|
+| **The PAST** | phoneme judgements need an ear | The app *records* results, it does not administer. Entry form with a two-second automaticity timer. Seeds the skill model. |
+| **One Minute Activities** | phoneme manipulation is oral | Presenter drives the item and the two-second window; the adult taps automatic / correct / wrong. 2,856 clean items at Levels H–M in `activities.json`. |
+| **The Nonsense Ladder** | reading aloud must be heard | Adult scores each word 1 (letter-by-letter) / 2 (sounded then blended) / 3 (instant). A solo variant records audio for later review rather than scoring it. |
+| **Reading Aloud** | miscues must be heard | Every error logged with type. Kilpatrick's evidence is that correcting *every* error beats correcting only meaning-changing ones. |
+
+Sequencing for One Minute Activities is Kilpatrick's, not invented: start at D1
+whatever the PAST says and climb one activity per level until he struggles;
+spend time only at F and above; advance after three or four consecutive
+automatic days.
+
+### Phase 4 — word study enrichment (solo)
+
+- **Backwards** — backward decoding (#8), revealing from the rime forward
+  (`er → ter → enter → penter → arpenter → carpenter`). Also the tool offered
+  when he is stuck on a word anywhere else in the app.
+- **Rime highlighting** in Autopsy (#9) — onsets grey, rimes black, faded out
+  as accuracy rises.
+- **Making and Breaking** (#17) — the letters of a long word, scrambled; find
+  as many words as possible, then the long one.
+
+---
+
+## Home screen restructure
+
+Twelve entries would be worse than any of them is good. Target shape:
+
+```
+Start            the daily mix — now draws blocks from a wider pool
+Spelling Slaughter   curriculum lists
+Show the Middle      maths
+Hard Word Radar      paste real text
+The Codex            what he has collected
+The Expedition       the story
+Teacher              everything needing an adult, plus the evidence view
+```
+
+Make it Boring and the Phase 1/2/4 drills become **blocks inside a session**,
+scheduled like any other activity, rather than separate destinations. This also
+gets them practised regularly instead of only when chosen.
+
+---
+
+## The evidence view
+
+The point of all of this is to answer one question: does word-level skill move
+under good instruction? A dedicated view in the teacher area tracks it:
+
+- nonsense-word decoding accuracy and time, weekly, fresh items each time
+- nonsense-word spelling accuracy
+- PAST levels — highest correct, highest automatic
+- oral-reading miscue rate and type mix
+- look-alike discrimination time
+
+**Predictions are written down before the data arrives** (`docs/predictions.md`),
+so the result cannot be reinterpreted afterwards. Fast movement in weeks
+supports the habit reading; flat nonsense-word decoding despite automatic PAST
+levels points at rapid naming or working memory and argues for a CTOPP-2.
+
+---
+
+## Rules any new activity must follow
+
+Inherited from the rest of the app, and they apply to everything above:
+
+1. **Shortcut-proof by construction.** If there is a cheaper path through the
+   task than the intended one, he will find it within minutes.
+2. **Multiple choice only where reasoning is the target skill.** Distractors
+   must be eliminable only by the skill being trained — Impostor Row qualifies
+   because its distractors differ by one grapheme.
+3. **A wrong answer shows why.** Comparison rows, not a warning colour.
+4. **No timer on screen.** Latency is recorded, never displayed.
+5. **Hints are counted, never punished**, and never collapse the ladder — a
+   hint that gives away more than the rung below it becomes the only hint used.
+6. **Content is validated by `tools/check.mjs`** or it does not ship.
