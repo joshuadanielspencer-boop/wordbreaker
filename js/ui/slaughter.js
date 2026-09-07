@@ -3,7 +3,7 @@
 import { allMissions, missionProgress, wordStatus, missedCount } from '../core/mission.js';
 import { missionById } from '../content/lexicon.js';
 
-export function renderSlaughter(app, { onBack, onDrill, onReview }) {
+export function renderSlaughter(app, { onBack, onDrill, onReview, onTest }) {
   window.scrollTo(0, 0);
   const missions = allMissions();
 
@@ -31,11 +31,12 @@ export function renderSlaughter(app, { onBack, onDrill, onReview }) {
   app.querySelector('[data-act="back"]').onclick = onBack;
   app.querySelectorAll('.mission-card').forEach(b =>
     b.onclick = () => renderMission(app, b.dataset.id, {
-      onBack: () => renderSlaughter(app, { onBack, onDrill, onReview }), onDrill, onReview,
+      onBack: () => renderSlaughter(app, { onBack, onDrill, onReview, onTest }),
+      onDrill, onReview, onTest,
     }));
 }
 
-export function renderMission(app, id, { onBack, onDrill, onReview }) {
+export function renderMission(app, id, { onBack, onDrill, onReview, onTest }) {
   window.scrollTo(0, 0);
   const mission = missionById(id);
   const { done, total, pct } = missionProgress(mission);
@@ -74,11 +75,21 @@ export function renderMission(app, id, { onBack, onDrill, onReview }) {
         ? `<button class="btn primary big" data-act="drill">Start the slaughter</button>`
         : `<p class="msg good">Every word in this mission is finished.</p>`}
       ${missed ? `<button class="btn big" data-act="review">Review the misses &nbsp;·&nbsp; ${missed} word${missed === 1 ? '' : 's'}</button>` : ''}
-    </div>`;
+      ${done < total ? `
+        <button class="btn big" data-act="test">Spelling test &nbsp;·&nbsp; ${total - done} word${total - done === 1 ? '' : 's'}</button>` : ''}
+    </div>
+    ${done < total ? `
+      <p class="msg plainmsg fineprint" style="text-align:center">
+        The test is the real thing: every word read aloud, nothing on screen,
+        no hints, one go each. It counts toward slaughtering a word, because a
+        test is the best evidence there is.
+      </p>` : ''}`;
 
   app.querySelector('[data-act="back"]').onclick = onBack;
   const d = app.querySelector('[data-act="drill"]');
   if (d) d.onclick = () => onDrill(mission.id);
   const rv = app.querySelector('[data-act="review"]');
   if (rv && onReview) rv.onclick = () => onReview(mission.id);
+  const ts = app.querySelector('[data-act="test"]');
+  if (ts && onTest) ts.onclick = () => onTest(mission.id, 'sound');
 }

@@ -82,6 +82,20 @@ prompts with the definition; `mission.js` will not schedule it until a stage
 that displayed the definition has been logged (`detail.defShown`). Anything that
 tests a word from its meaning has to check that first.
 
+**Never add the PAST items to this repo.** The test is Kilpatrick's, free at
+thepasttest.com, and this app deploys to a public address — free to download is
+not free to republish. The app ships the machinery; the adult pastes a form in
+once (`js/core/pastform.js`), stored per-device. Do not "helpfully" generate
+PAST-like items either: a made-up test producing a made-up automaticity profile
+would still look like evidence, and predictions.md hangs Branch B's whole
+falsification on "PAST all automatic at baseline".
+
+**Say numbers in sentences in the teacher area.** `tion · 45% · n=11` is
+precise and tells a parent nothing they can act on. And below four attempts,
+refuse to characterise him at all — one wrong answer is not a pattern, and a
+screen that says it is invites exactly the over-reading of thin data this
+project exists to avoid.
+
 **An adaptive ladder cannot be an outcome measure.** `currentPattern()` holds
 accuracy in a band by design. Growth shows there as the rung reached, never as
 the score. If someone asks for "the accuracy trend from his dictation
@@ -95,8 +109,10 @@ Solo, daily        Start (mixed session, ~17 items, a third of it Kilpatrick),
                    Codex, The Expedition
 Built, Phase 1     Impostor Row, Ransom Note, Spell It Out
 Built, Phase 2     Nonsense Dictation, Sound Hunt
-Built, Phase 3     Teacher area — PAST recorder, Nonsense Ladder, both probes,
-                   evidence view, spelling report, review-the-misses drill
+Built, Phase 3     Teacher area — PAST administration (form loaded by the
+                   adult) plus a paper recorder, Nonsense Ladder, both probes,
+                   evidence view, spelling report, review-the-misses drill,
+                   whole-list spelling test
 Not built          One Minute Activities (no item bank), Reading Aloud miscue
                    log, Phase 4 word-study enrichment
 ```

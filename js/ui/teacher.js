@@ -20,8 +20,10 @@ import {
   DECODING, SPELLING, PROBE_LABEL, runs, lastRun, due, baseline, movement, remaining,
 } from '../core/probe.js';
 import { PAST_LEVELS, pastHistory, lastPast, summarise, hasBaseline } from '../core/past.js';
+import { parseForm, promptFor, saveForm, currentForm, clearForm, itemSequence, toLevels } from '../core/pastform.js';
 import { allMissions, wordStatus } from '../core/mission.js';
-import { MORPH, drillableMorphemes } from '../content/lexicon.js';
+import { MORPH, drillableMorphemes, originLabel } from '../content/lexicon.js';
+import { voiceQuality } from '../core/speech.js';
 import { level, LEVEL_NAME, weakest, entry as mastEntry } from '../core/mastery.js';
 import { SKILLS, LADDER } from '../content/math.js';
 
@@ -46,6 +48,7 @@ export function renderTeacher(app, opts) {
   const { onBack } = opts;
   window.scrollTo(0, 0);
   const S = load();
+  const form = currentForm();
 
   // Gate 0 is three separate baselines, and it is not "run" until all three
   // are. Listing them individually stops a half-taken baseline reading as a
@@ -87,8 +90,15 @@ export function renderTeacher(app, opts) {
 
     <div class="section-title">run something</div>
     <div class="homegrid">
-      <button class="btn primary big" data-act="past">
-        The PAST${hasBaseline() ? ` &nbsp;·&nbsp; last ${fmtDay(lastPast().t)}` : ' &nbsp;·&nbsp; never run'}
+      ${form ? `
+        <button class="btn primary big" data-act="past-run">
+          Run the PAST &nbsp;·&nbsp; ${esc(form.name)}
+        </button>` : `
+        <button class="btn primary big" data-act="past-load">
+          Load a PAST form &nbsp;·&nbsp; free from thepasttest.com
+        </button>`}
+      <button class="btn big" data-act="past">
+        Record a PAST done on paper${hasBaseline() ? ` &nbsp;·&nbsp; last ${fmtDay(lastPast().t)}` : ''}
       </button>
       <button class="btn big" data-act="probe-decoding">
         Nonsense Ladder — read aloud${due(DECODING) ? ' &nbsp;·&nbsp; due' : ''}
@@ -102,11 +112,16 @@ export function renderTeacher(app, opts) {
     <div class="homegrid">
       <button class="btn big" data-act="evidence">Evidence — does word-level skill move?</button>
       <button class="btn big" data-act="spelling">Spelling report</button>
-      <button class="btn big" data-act="progress">Error fingerprint &amp; sessions</button>
+      <button class="btn big" data-act="progress">What keeps going wrong</button>
+      ${form ? `<button class="btn big" data-act="past-load">Change the PAST form</button>` : ''}
     </div>`;
 
   app.querySelector('[data-act="back"]').onclick = onBack;
   app.querySelector('[data-act="past"]').onclick = () => renderPastForm(app, opts);
+  const pr = app.querySelector('[data-act="past-run"]');
+  if (pr) pr.onclick = () => renderPastRun(app, opts);
+  const pl = app.querySelector('[data-act="past-load"]');
+  if (pl) pl.onclick = () => renderLoadForm(app, opts);
   app.querySelector('[data-act="probe-decoding"]').onclick = () => opts.onRunProbe(DECODING);
   app.querySelector('[data-act="probe-spelling"]').onclick = () => opts.onRunProbe(SPELLING);
   app.querySelector('[data-act="evidence"]').onclick = () => renderEvidence(app, opts);
@@ -291,7 +306,180 @@ export function renderSpellingReport(app, opts) {
   app.querySelector('[data-act="back"]').onclick = () => renderTeacher(app, opts);
 }
 
-// ------------------------------------------------------------- the PAST form
+// --------------------------------------------------- loading a PAST form
+export function renderLoadForm(app, opts) {
+  window.scrollTo(0, 0);
+  const existing = currentForm();
+
+  app.innerHTML = `
+    ${topbar('past form')}
+    <div class="hero teacher-hero">
+      <h1 style="font-size:28px">Load a PAST form</h1>
+      <p>Type the words in once. After that the app runs the test for you.</p>
+    </div>
+
+    <p class="msg plainmsg teacher-warn">
+      The PAST is David Kilpatrick's and he gives it away free at
+      <b>thepasttest.com</b> — forms A, B, C and D, the same test with different
+      words, meant for repeat administration. Download it there. The words are
+      not shipped inside this app: free to download is not the same as free to
+      republish, and this app sits on a public web address.
+    </p>
+
+    ${existing ? `
+      <p class="msg good">
+        <b>${esc(existing.name)}</b> is loaded — ${existing.levels.length} levels,
+        ${itemSequence(existing).length} items.
+      </p>` : ''}
+
+    <div class="section-title">the format</div>
+    <p class="msg plainmsg fineprint">
+      One item per line: <b>the word | what changes | the answer</b>. Start each
+      level with <b>=</b> and its letter. Anything after <b>#</b> is ignored.
+    </p>
+    <pre class="format-sample">= A | Syllables
+bookcase | book | case
+cowboy | cow | boy
+
+= D | First sound
+feet | /f/ | eat
+
+= H | Change the first sound
+guide | /g/ to /r/ | ride</pre>
+    <p class="msg plainmsg fineprint">
+      Deletion items read “now say it without <i>book</i>”. Anything written
+      with <b>to</b> — like <b>/g/ to /r/</b> — is read as a change instead.
+    </p>
+
+    <div class="section-title">which form</div>
+    <input class="answer" id="formname" maxlength="40" placeholder="e.g. PAST Form A"
+           value="${esc(existing?.name || '')}" autocomplete="off">
+
+    <div class="section-title">paste it here</div>
+    <textarea class="answer form-paste" rows="12" spellcheck="false"
+      placeholder="= A | Syllables&#10;bookcase | book | case"></textarea>
+
+    <div class="feedback" aria-live="polite"></div>
+    <div class="homegrid" style="margin-top:16px">
+      <button class="btn primary big" data-act="save">Check it and save</button>
+      ${existing ? `<button class="btn big danger" data-act="clear">Remove the loaded form</button>` : ''}
+    </div>`;
+
+  app.querySelector('[data-act="back"]').onclick = () => renderTeacher(app, opts);
+
+  const fb = app.querySelector('.feedback');
+  app.querySelector('[data-act="save"]').onclick = () => {
+    const text = app.querySelector('.form-paste').value;
+    const name = app.querySelector('#formname').value.trim() || 'PAST form';
+    const { levels, errors } = parseForm(text);
+
+    // Show every problem at once. Fixing one line, resubmitting and being told
+    // about the next one is how a twenty-line paste becomes twenty round trips.
+    if (errors.length) {
+      fb.innerHTML = `<p class="msg gentle">Nothing saved yet — ${errors.length}
+        ${errors.length === 1 ? 'line needs' : 'lines need'} a look:</p>
+        <ul class="errlist">${errors.slice(0, 12).map(e => `<li>${esc(e)}</li>`).join('')}</ul>
+        ${errors.length > 12 ? `<p class="msg plainmsg fineprint">…and ${errors.length - 12} more.</p>` : ''}`;
+      return;
+    }
+    saveForm(name, levels);
+    fb.innerHTML = `<p class="msg good">Saved — ${levels.length} levels,
+      ${levels.reduce((a, l) => a + l.items.length, 0)} items.</p>`;
+    setTimeout(() => renderTeacher(app, opts), 700);
+  };
+
+  const cl = app.querySelector('[data-act="clear"]');
+  if (cl) cl.onclick = () => {
+    if (confirm('Remove the loaded PAST form? Results already recorded are kept.')) {
+      clearForm();
+      renderLoadForm(app, opts);
+    }
+  };
+}
+
+// ------------------------------------------- administering a loaded PAST form
+export function renderPastRun(app, opts) {
+  const form = currentForm();
+  if (!form) return renderLoadForm(app, opts);
+  const seq = itemSequence(form);
+  const results = [];
+  let i = 0;
+
+  function step() {
+    window.scrollTo(0, 0);
+    if (i >= seq.length) return done();
+
+    const item = seq[i];
+    const p = promptFor(item);
+    app.innerHTML = `
+      ${topbar(`${form.name} · ${i + 1} / ${seq.length}`, 'Stop')}
+      <div class="past-run">
+        <p class="teacher-label">level ${esc(item.levelId)} — ${esc(item.levelLabel)}</p>
+        <div class="casefile past-item">
+          <p class="past-say">Say <b>${esc(p.say)}</b></p>
+          <p class="past-instruction">${esc(p.instruction)}</p>
+          <p class="past-answer">answer: <b>${esc(p.answer)}</b></p>
+        </div>
+
+        <div class="timer-box">
+          <button class="btn" data-act="time">Start the two seconds</button>
+          <div class="timer-bar"><i></i></div>
+          <span class="timer-state">ready</span>
+        </div>
+
+        <div class="teacher-panel">
+          <p class="teacher-label">what happened?</p>
+          <div class="score-row">
+            <button class="btn score s3" data-v="auto" aria-label="Right, and within two seconds">
+              <b>Right, quickly</b><span>inside the two seconds</span></button>
+            <button class="btn score s2" data-v="slow" aria-label="Right, but took longer than two seconds">
+              <b>Right, slowly</b><span>got there, past two seconds</span></button>
+            <button class="btn score s0" data-v="wrong" aria-label="Wrong">
+              <b>Wrong</b><span>did not get there</span></button>
+            <button class="btn score" data-v="skip" aria-label="Skip this item">
+              <b>Skip</b><span>not administered</span></button>
+          </div>
+        </div>
+      </div>`;
+
+    app.querySelector('[data-act="back"]').onclick = () => {
+      if (confirm('Stop the test? Nothing will be recorded.')) renderTeacher(app, opts);
+    };
+
+    const bar = app.querySelector('.timer-bar i');
+    const state = app.querySelector('.timer-state');
+    app.querySelector('[data-act="time"]').onclick = () => {
+      bar.style.transition = 'none'; bar.style.width = '0%';
+      state.textContent = 'timing';
+      requestAnimationFrame(() => {
+        bar.style.transition = 'width 2s linear';
+        bar.style.width = '100%';
+      });
+      setTimeout(() => { state.textContent = 'two seconds'; }, 2000);
+    };
+
+    app.querySelectorAll('.score').forEach(b => b.onclick = () => {
+      const v = b.dataset.v;
+      if (v !== 'skip') {
+        results.push({
+          levelId: item.levelId, word: item.word, answer: item.answer,
+          correct: v !== 'wrong', automatic: v === 'auto',
+        });
+      }
+      i++;
+      step();
+    });
+  }
+
+  function done() {
+    if (!results.length) return renderTeacher(app, opts);
+    opts.onSavePast(toLevels(results), `${form.name} — administered in app`);
+  }
+
+  step();
+}
+
+// ------------------------------------------------- the PAST quick recorder
 export function renderPastForm(app, opts) {
   window.scrollTo(0, 0);
   const picks = {};                   // levelId -> 'auto' | 'slow' | 'wrong'
@@ -393,31 +581,136 @@ export function renderPastForm(app, opts) {
 }
 
 // ---------------------------------------------- error fingerprint & sessions
+//
+// The fingerprint used to read `tion · 45% · n=11`, which is precise and tells
+// a parent nothing they can act on. What a teacher needs from it is: which
+// piece, what it means, how badly, and what to do about it — in sentences.
+
+const PIECE_KIND = {
+  prefix: 'a beginning',
+  root: 'a root — the part carrying the meaning',
+  suffix: 'an ending',
+};
+
+/**
+ * Right about N times in ten, said the way a person would say it.
+ *
+ * Below four attempts it deliberately refuses to characterise him at all. One
+ * wrong answer is not "he almost never gets this right", and a screen that
+ * says so invites exactly the over-reading of thin data this whole project is
+ * organised against.
+ */
+function howOften(s, tries) {
+  if (tries < 4) return null;
+  const n = Math.round(s * 10);
+  if (n <= 1) return 'almost never gets this right';
+  if (n <= 3) return `gets this right about ${n} times in 10`;
+  if (n <= 6) return `gets this right about ${n} times in 10 — a coin toss`;
+  if (n <= 8) return `gets this right about ${n} times in 10`;
+  return 'nearly has this, but not reliably';
+}
+
+function fingerprintRow(w) {
+  const m = MORPH[w.id];
+  const days = mastEntry(w.id).days.length;
+  // Short words first (family is sorted by length), which are the ones worth
+  // showing a child as the example.
+  const examples = m.family.slice(0, 3);
+  return `
+    <div class="fp-row">
+      <div class="fp-head">
+        <span class="part ${m.type}"><span class="part-text">${m.canonical}</span></span>
+        <span class="fp-gloss">${esc(m.gloss)}</span>
+      </div>
+      <p class="fp-line">
+        ${howOften(w.s, w.n)
+          ? `He <b>${howOften(w.s, w.n)}</b> — ${w.n} tries${
+              days ? ` across ${days} ${days === 1 ? 'day' : 'days'}` : ''}.`
+          : `<span class="fp-thin">Only ${w.n} ${w.n === 1 ? 'try' : 'tries'} so far${
+              w.s < 0.5 ? ', and it went wrong' : ''} — too early to call this a pattern.</span>`}
+        It is ${PIECE_KIND[m.type] || 'a piece'} meaning “${esc(m.gloss)}”${
+          m.origin ? `, from ${esc(originLabel(m.origin))}` : ''}.
+      </p>
+      ${examples.length ? `<p class="fp-line fp-examples">
+        Turns up in ${examples.map(e => `<i>${esc(e)}</i>`).join(', ')}${
+          m.family.length > 3 ? ` and ${m.family.length - 3} more` : ''}.
+      </p>` : ''}
+    </div>`;
+}
+
 export function renderProgress(app, opts) {
   window.scrollTo(0, 0);
   const S = load();
   const teach = drillableMorphemes().map(m => m.id);
   const worst = weakest(teach, 12);
   const sessions = S.sessions.slice(-10).reverse();
+  const vq = voiceQuality();
 
   app.innerHTML = `
     ${topbar('progress')}
-    <div class="section-title">${esc(S.name)} — error fingerprint, weakest pieces</div>
-    ${worst.length ? `<div class="family">${worst.map(w =>
-      `<span>${MORPH[w.id].canonical} · ${Math.round(w.s * 100)}% · n=${w.n}</span>`).join('')}</div>`
-      : '<p class="msg plainmsg">No data yet.</p>'}
+    <div class="section-title">${esc(S.name)} — what keeps going wrong</div>
+    ${!worst.length ? '<p class="msg plainmsg">No data yet — he needs a few sessions first.</p>' : `
+      <p class="msg plainmsg fineprint">
+        Words are built out of pieces, and these are the pieces he is getting
+        wrong most often. They are worth pre-teaching before he reads something
+        hard, because one shaky piece breaks every long word that contains it.
+        Ordered worst first.
+      </p>
+      <div class="fingerprint">
+        ${worst.map(w => fingerprintRow(w)).join('')}
+      </div>`}
+    <div class="section-title">how the pieces are spread</div>
+    <p class="msg plainmsg fineprint">
+      Of the ${teach.length} word-pieces the app teaches, this is how far along
+      he is with each. <b>Boring</b> is the goal, not <b>solid</b> — it means the
+      piece has stopped costing him any effort, which is what fluency actually is.
+    </p>
+    <div class="spread">
+      ${[
+        [4, 'boring', 'automatic — costs him nothing'],
+        [3, 'solid', 'reliable, still takes a moment'],
+        [2, 'developing', 'right more often than not'],
+        [1, 'shaky', 'getting it wrong more than half the time'],
+        [0, 'not met yet', 'has not come up'],
+      ].map(([l, name, why]) => {
+        const n = teach.filter(id => level(id) === l).length;
+        return `<div class="spread-row">
+          <span class="spread-n">${n}</span>
+          <span class="spread-name"><b>${name}</b><span>${why}</span></span>
+        </div>`;
+      }).join('')}
+    </div>
+
     <div class="section-title">recent sessions</div>
-    ${sessions.length ? sessions.map(s =>
-      `<p class="msg plainmsg" style="text-align:left">${fmtDay(s.started)} — ${s.correct}/${s.items} · ${Math.round((s.ended - s.started) / 60000)} min</p>`).join('')
-      : '<p class="msg plainmsg">No sessions yet.</p>'}
-    <div class="section-title">show the middle</div>
-    <div class="family">${LADDER.map(id => {
+    ${sessions.length ? sessions.map(s => {
+      const mins = Math.round((s.ended - s.started) / 60000);
+      return `<p class="msg plainmsg" style="text-align:left">
+        <b>${fmtDay(s.started)}</b> — ${s.correct} right out of ${s.items},
+        ${mins} minute${mins === 1 ? '' : 's'}.</p>`;
+    }).join('') : '<p class="msg plainmsg">No sessions yet.</p>'}
+
+    <div class="section-title">maths — show the middle</div>
+    <div class="spread">${LADDER.map(id => {
       const e = mastEntry(id);
-      return `<span>${SKILLS[id].name}: ${e.n ? LEVEL_NAME[level(id)] + ` (n=${e.n})` : 'not tried'}</span>`;
+      return `<div class="spread-row">
+        <span class="spread-name"><b>${SKILLS[id].name}</b><span>${
+          e.n ? `${LEVEL_NAME[level(id)]} — ${e.n} ${e.n === 1 ? 'try' : 'tries'}` : 'not tried yet'
+        }</span></span>
+      </div>`;
     }).join('')}</div>
-    <div class="section-title">mastery spread</div>
-    <div class="family">${[0, 1, 2, 3, 4].map(l =>
-      `<span>${LEVEL_NAME[l]}: ${teach.filter(id => level(id) === l).length}</span>`).join('')}</div>
+
+    <div class="section-title">the computer's voice</div>
+    <p class="msg plainmsg ${vq.good ? '' : 'teacher-warn'}">
+      ${vq.name ? `Currently using <b>${esc(vq.name)}</b>. ` : 'No speech voice available. '}
+      ${vq.good
+        ? 'That is one of the high-quality voices — good.'
+        : `That is one of macOS's old built-in voices, which sound robotic and are
+           hard to make out on a nonsense word. The fix is not in this app: open
+           <b>System Settings → Accessibility → Spoken Content → System Voice →
+           Manage Voices</b> and download an <b>Enhanced</b> or <b>Premium</b>
+           English voice. Wordbreaker will pick it up automatically on reload, and
+           the difference is large.`}
+    </p>
     <div class="stats" style="margin-top:18px">
       <button class="btn ghost" data-act="export">Export a save</button>
       <button class="btn ghost danger" data-act="reset">Reset ${esc(S.name)}</button>

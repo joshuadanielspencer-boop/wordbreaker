@@ -41,7 +41,7 @@
 
 import { MORPH } from '../content/lexicon.js';
 import { say } from '../voice/voice.js';
-import { say as speak, speechAvailable } from '../core/speech.js';
+import { say as speak, sayTwice, speechAvailable, RATE } from '../core/speech.js';
 
 export function mount(el, word, opts = {}) {
   return new Promise(resolve => {
@@ -60,7 +60,8 @@ export function mount(el, word, opts = {}) {
           : 'Spell it. No looking — there is nothing to look at.'}</p>
         <div class="casefile recall-card">
           ${mode === 'sound'
-            ? `<button class="btn speak-big" data-act="play">Play the word again</button>`
+            ? `<button class="btn speak-big" data-act="play">Play the word again</button>
+               <button class="btn ghost slow-toggle" data-act="slow" aria-pressed="false">Slower</button>`
             : `<p class="definition">${word.def}</p>`}
           <p class="shape">
             <span>${word.parts.length} pieces</span>
@@ -72,7 +73,7 @@ export function mount(el, word, opts = {}) {
                aria-label="spell the word" placeholder="spell it">
         <div class="feedback" aria-live="polite"></div>
         <div class="actions">
-          <button class="btn ghost" data-act="hint">Hint</button>
+          ${opts.test ? '' : `<button class="btn ghost" data-act="hint">Hint</button>`}
           <button class="btn primary" data-act="go">Check it</button>
         </div>
       </div>`;
@@ -81,13 +82,26 @@ export function mount(el, word, opts = {}) {
     const feedback = el.querySelector('.feedback');
     input.focus();
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); check(); } });
-    el.querySelector('[data-act="hint"]').onclick = hint;
+    const hintBtn = el.querySelector('[data-act="hint"]');
+    if (hintBtn) hintBtn.onclick = hint;
     el.querySelector('[data-act="go"]').onclick = check;
 
+    let slow = false;
     if (mode === 'sound') {
-      const play = () => { plays++; speak(target); input.focus(); };
+      // Read twice with a gap, the way a teacher running a spelling test does.
+      // One quick reading makes catching the word part of the test, which is
+      // not what is being measured here.
+      const play = () => { plays++; sayTwice(target, { rate: RATE.word, slow }); input.focus(); };
       el.querySelector('[data-act="play"]').onclick = play;
-      setTimeout(play, 350);            // read it once on arrival
+      const slowBtn = el.querySelector('[data-act="slow"]');
+      slowBtn.onclick = () => {
+        slow = !slow;
+        slowBtn.classList.toggle('on', slow);
+        slowBtn.setAttribute('aria-pressed', String(slow));
+        slowBtn.textContent = slow ? 'Slower ✓' : 'Slower';
+        play();
+      };
+      setTimeout(play, 350);
     }
 
     /** Each rung gives away a little more, and never the spelling outright. */
@@ -120,7 +134,11 @@ export function mount(el, word, opts = {}) {
       attempts++;
       const ok = given === target;
 
-      if (!ok && attempts === 1) {
+      // In TEST mode there is no second go and no nudge about how much was
+      // right. A test measures what he can produce unaided on the first
+      // attempt; a retry is practice, and mixing the two makes the score mean
+      // neither thing.
+      if (!ok && attempts === 1 && !opts.test) {
         const shared = [...given].findIndex((c, i) => c !== target[i]);
         feedback.innerHTML = `<p class="msg gentle">${say('recallWrong', {}, opts.personality)}</p>` +
           (shared > 1 ? `<p class="msg gentle">The first ${shared} letters are right.</p>` : '');
@@ -165,9 +183,10 @@ export function mount(el, word, opts = {}) {
         `${speechAvailable() ? `<button class="btn ghost speak" data-act="say" aria-label="hear the word">🔊</button>` : ''}
          <button class="btn primary" data-act="next">Next</button>`;
       const sayBtn = el.querySelector('[data-act="say"]');
-      if (sayBtn) sayBtn.onclick = () => speak(target);
+      if (sayBtn) sayBtn.onclick = () => speak(target, { rate: RATE.word });
       el.querySelector('[data-act="next"]').focus();
-      resolve({ correct: ok, ms, credit, detail: { given, hints, attempts, clean, mode, plays } });
+      resolve({ correct: ok, ms, credit,
+                detail: { given, hints, attempts, clean, mode, plays, test: !!opts.test } });
     }
   });
 }

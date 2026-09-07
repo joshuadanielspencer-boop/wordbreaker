@@ -684,3 +684,56 @@ body {
   margin: 10px auto 0; max-width: 34ch;
 }
 .slaughter-word.missed { border-color: var(--gentle); }
+
+/* ---------- slower-speech toggle ---------- */
+.slow-toggle { padding: 8px 14px; min-height: 0; font-size: 13px; margin-top: 8px; }
+.slow-toggle.on { background: var(--ink); color: var(--accent-ink); border-color: var(--ink); }
+
+/* ---------- error fingerprint, in sentences ---------- */
+.fingerprint { display: flex; flex-direction: column; gap: 10px; }
+.fp-row {
+  border: 1.5px solid var(--line); border-radius: var(--r);
+  background: var(--surface); padding: 12px 14px;
+}
+.fp-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.fp-gloss { color: var(--ink-dim); font-size: 13px; }
+.fp-line { text-align: left; font-size: 14px; margin: 6px 0 0; line-height: 1.5; }
+.fp-examples { color: var(--ink-dim); }
+.fp-examples i, .report-table .wrote i { font-style: italic; }
+
+/* ---------- plain-English spreads ---------- */
+.spread { display: flex; flex-direction: column; gap: 6px; }
+.spread-row {
+  display: flex; align-items: center; gap: 12px;
+  border: 1.5px solid var(--line); border-radius: var(--r);
+  background: var(--surface); padding: 10px 14px;
+}
+.spread-n {
+  font-size: 22px; font-weight: 700; min-width: 40px; text-align: right;
+}
+.spread-name { display: flex; flex-direction: column; }
+.spread-name span { color: var(--ink-dim); font-size: 13px; }
+
+/* ---------- loading and running a PAST form ---------- */
+.format-sample {
+  background: var(--surface-2); border: 1.5px solid var(--line);
+  border-radius: var(--r); padding: 12px 14px; font-family: var(--mono);
+  font-size: 13px; line-height: 1.6; overflow-x: auto; white-space: pre;
+}
+.form-paste { width: 100%; font-family: var(--mono); font-size: 13px; }
+.errlist {
+  text-align: left; font-size: 13px; color: var(--gentle);
+  margin: 6px 0 0; padding-left: 20px; line-height: 1.6;
+}
+.past-run { max-width: 560px; margin: 0 auto; }
+.past-item { text-align: center; }
+.past-say { font-size: 26px; margin: 0 0 6px; }
+.past-say b { font-size: 34px; }
+.past-instruction { font-size: 20px; color: var(--ink); margin: 0 0 12px; }
+.past-answer {
+  color: var(--ink-dim); font-size: 14px; margin: 0;
+  padding-top: 10px; border-top: 1px dashed var(--line);
+}
+.past-answer b { color: var(--good); }
+.past-run .score-row { grid-template-columns: repeat(2, 1fr); }
+.fp-thin { color: var(--ink-dim); }

@@ -24,7 +24,7 @@
 
 import { MORPH } from '../content/lexicon.js';
 import { say } from '../voice/voice.js';
-import { say as speak, speechAvailable } from '../core/speech.js';
+import { say as speak, speechAvailable, RATE } from '../core/speech.js';
 
 export function mount(el, word, opts = {}) {
   return new Promise(resolve => {
@@ -59,7 +59,7 @@ export function mount(el, word, opts = {}) {
     const feedback = el.querySelector('.feedback');
     el.querySelector('[data-act="cover"]').onclick = cover;
 
-    const play = () => { plays++; speak(word.text); el.querySelector('.answer')?.focus(); };
+    const play = () => { plays++; speak(word.text, { rate: RATE.word }); el.querySelector('.answer')?.focus(); };
     const wireSpeak = () => {
       const b = el.querySelector('[data-act="speak"]');
       if (b) b.onclick = play;

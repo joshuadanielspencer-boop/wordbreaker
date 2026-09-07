@@ -5,7 +5,7 @@
 
 import { MORPH, originLabel } from '../content/lexicon.js';
 import { say } from '../voice/voice.js';
-import { say as speak, speechAvailable } from '../core/speech.js';
+import { say as speak, speechAvailable, RATE } from '../core/speech.js';
 
 export function mount(el, word, opts = {}) {
   return new Promise(resolve => {
@@ -202,7 +202,7 @@ export function mount(el, word, opts = {}) {
         (speechAvailable() ? `<button class="btn ghost speak" data-act="speak" aria-label="hear the word">🔊</button>` : '') +
         `<button class="btn primary" data-act="next">Next</button>`;
       const sp = el.querySelector('[data-act="speak"]');
-      if (sp) sp.onclick = () => speak(word.text);
+      if (sp) sp.onclick = () => speak(word.text, { rate: RATE.word });
       el.querySelector('[data-act="next"]').focus();
     }
   });

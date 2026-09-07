@@ -13,7 +13,7 @@
 // memory for an arbitrary string, which is the opposite of the point.
 
 import { say } from '../voice/voice.js';
-import { say as speak, speechAvailable } from '../core/speech.js';
+import { sayTwice as speak, speechAvailable, RATE } from '../core/speech.js';
 import { soundsSame } from '../core/phonics.js';
 import { PATTERN_LABEL } from '../content/nonsense.js';
 
@@ -36,6 +36,7 @@ export function mount(el, item, opts = {}) {
         <div class="casefile dictation-card">
           <div class="stamp">not a real word</div>
           <button class="btn speak-big" data-act="play">Say it again</button>
+          <button class="btn ghost slow-toggle" data-act="slow" aria-pressed="false">Slower</button>
           <p class="shape"><span>${PATTERN_LABEL[pattern] || pattern}</span></p>
         </div>
         <input class="answer" type="text" inputmode="text" autocapitalize="off"
@@ -52,8 +53,22 @@ export function mount(el, item, opts = {}) {
     input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); check(); } });
     el.querySelector('[data-act="go"]').onclick = check;
 
-    const play = () => { plays++; speak(target); input.focus(); };
+    // Nonsense words get the slowest rate in the app and are read twice. There
+    // is no word knowledge to fall back on when the word does not exist, so a
+    // single quick reading tests hearing, not spelling. "Slower" is there
+    // because no fixed rate suits every word, and replaying is free anyway —
+    // it is the prompt, not a hint.
+    let slow = false;
+    const play = () => { plays++; speak(target, { rate: RATE.nonsense, slow }); input.focus(); };
     el.querySelector('[data-act="play"]').onclick = play;
+    const slowBtn = el.querySelector('[data-act="slow"]');
+    slowBtn.onclick = () => {
+      slow = !slow;
+      slowBtn.classList.toggle('on', slow);
+      slowBtn.setAttribute('aria-pressed', String(slow));
+      slowBtn.textContent = slow ? 'Slower ✓' : 'Slower';
+      play();
+    };
     setTimeout(play, 400);
 
     function check() {

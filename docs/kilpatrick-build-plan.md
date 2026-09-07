@@ -130,7 +130,7 @@ without it, which is the real reason this phase came next — not completeness.
 
 | Activity | Why an adult | Status |
 |---|---|---|
-| **The PAST** | phoneme judgements need an ear | ✅ Built. The app *records* results, it does not administer. Entry form, two-second window, correct **and** automatic per level. |
+| **The PAST** | phoneme judgements need an ear | ✅ Built. The app drives the items and the two-second window; the adult listens and taps. The items are **not** in the repo — the test is free from thepasttest.com and the adult pastes a form in once, because free to download is not free to republish and this app is public. A paper recorder remains for runs done away from the computer. |
 | **The Nonsense Ladder** | reading aloud must be heard | ✅ Built as the primary-outcome probe. Adult scores 1 (letter-by-letter) / 2 (sounded then blended) / 3 (instant). The solo audio-recording variant is not built. |
 | **The evidence view** | — | ✅ Built, last rather than first. A dashboard at n=0 is worse than none: trend lines through three points invite exactly the after-the-fact reinterpretation `predictions.md` exists to prevent. |
 | **One Minute Activities** | phoneme manipulation is oral | ⏳ Deferred. It is *intervention*, not measurement, and its own sequencing rule — start at D1 whatever the PAST says — means it does not depend on the Gate 0 result, so it blocks nothing. The `activities.json` item bank does not exist in the repo yet. |

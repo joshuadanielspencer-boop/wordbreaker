@@ -262,7 +262,13 @@ Each word runs through three stages, each giving away less than the last:
 2. **Look, cover, write, check** — studied as coloured morphemes, covered, then
    typed. Peeks are counted and never punished. This is *practice*.
 3. **Cold recall** — the word is never shown. This is the *test*, and the only
-   stage that certifies anything. It runs in two prompt modes:
+   stage that certifies anything. There is also a **Spelling test** button that
+   runs cold recall over the whole list in one sitting — every word once,
+   dictated, no hints, no second go, and a mark at the end with the
+   misspellings listed. It writes to the same log, so a word passed cleanly in
+   the test counts toward slaughtering it: a test is the best evidence there
+   is, so scoring it and then discarding it would be perverse. It runs in two
+   prompt modes:
    - **from the meaning** — the definition plus the shape (how many pieces, how
      many letters)
    - **from the sound** — the word read aloud, which is what a real spelling
@@ -285,7 +291,15 @@ useful practice; neither is evidence.
 ### Where the audio goes, and where it deliberately does not
 
 Speech is used in the spelling strand only, via the browser's own voices — no
-files, no network. It is safe here because every curriculum word is a **real
+files, no network. Rates are in `RATE` in `js/core/speech.js`: real words at
+0.75 and nonsense words at 0.6, both below the old flat 0.85, because there is
+no word knowledge to fall back on when the word does not exist and every
+phoneme has to land. Dictation prompts are read **twice** with a gap, the way a
+teacher running a spelling test does, and carry a **Slower** toggle. Voice
+selection prefers macOS's Enhanced/Premium/Siri voices over the compact
+defaults; the teacher area says which voice is in use and how to install a
+better one, because the compact voices are robotic and no amount of app code
+fixes that. It is safe here because every curriculum word is a **real
 English word**; a speech engine is language-model driven and would mangle the
 invented words in the transfer test, so nothing outside Spelling Slaughter
 touches it.
@@ -416,12 +430,26 @@ down `splinter`, turning the most diagnostic item in the battery into a false
 pass. The reason nonsense words measure anything is that they cannot be
 recognised, and an ASR is a recogniser.
 
-The **PAST** is recorded, never administered — the app shows an entry form and
-a two-second window, and an adult runs the test from the book. Both *correct*
-and *automatic* are recorded, because the gap between them is Kilpatrick's whole
-argument: correct-but-slow is a skill that is not yet automatic, which is a
-different finding, a different prediction and a different next test from not
-having the skill.
+The **PAST** is administered by an adult, with the app driving the items and
+the two-second window. Both *correct* and *automatic* are recorded, because the
+gap between them is Kilpatrick's whole argument: correct-but-slow is a skill
+that is not yet automatic, which is a different finding, a different prediction
+and a different next test from not having the skill.
+
+**The PAST items are not in this repo, and must not be added.** The test is
+Kilpatrick's and he gives it away free at <https://thepasttest.com> — four
+alternate forms (A/B/C/D), the same test with different words, meant for
+exactly the repeated administration this project needs. Free to download is not
+free to republish, and this app is deployed to a public address. So the app
+ships the machinery and you paste a form in once, from your own copy; it is
+stored per-device and travels in the profile export. Format and parser live in
+`js/core/pastform.js`.
+
+Inventing PAST-like items would be worse than shipping none. A made-up test
+producing a made-up automaticity profile would still *look* like evidence, and
+`docs/predictions.md` hangs the entire falsification of Branch B on "PAST all
+automatic at baseline". There is also a paper fallback: a quick recorder for a
+PAST run away from the computer.
 
 The evidence view prints compliance next to the outcome rather than on another
 screen, because `predictions.md` names it as a confound: a flat result at three

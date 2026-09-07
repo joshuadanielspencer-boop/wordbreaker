@@ -170,6 +170,42 @@ export function reviewQueue(missionId, n = 10) {
   return queue.slice(0, n);
 }
 
+/**
+ * A SPELLING TEST — the whole list, cold, one attempt each, no hints.
+ *
+ * The pieces of a real spelling test already existed (cold recall is the test;
+ * everything else is practice), but they were only ever met one at a time,
+ * scattered through a drill queue between autopsies and look-cover-writes.
+ * That is deliberate for learning and useless the night before Friday, when
+ * the question is simply "does he know these twenty words or not".
+ *
+ * So this is the sit-down version: every word once, dictated, nothing on
+ * screen that spells anything, no hint button, no second go, and a mark at the
+ * end. It writes to the same log as everything else, so a word passed cleanly
+ * here counts toward slaughtering it exactly as it would in a drill — a test is
+ * the *best* evidence, so it would be perverse to score it and then discard it.
+ *
+ * `mode` is 'sound' (a real spelling test), 'meaning', or 'mixed'. Sound needs
+ * speech; without it every word falls back to the definition.
+ */
+export function spellingTestQueue(missionId, { mode = 'sound', include = 'unfinished' } = {}) {
+  const mission = missionById(missionId);
+  if (!mission) return [];
+  const canSound = speechAvailable();
+
+  return mission.words
+    .map(w => ({ w, s: wordStatus(w.text) }))
+    .filter(x => include === 'all' || !x.s.slaughtered)
+    .map(({ w, s }, i) => {
+      // Meaning mode still requires the definition to have been taught. In a
+      // test that rule matters more, not less: a word he was never shown the
+      // definition for would be scored wrong for something nobody taught him.
+      const wantSound = mode === 'sound' || (mode === 'mixed' && i % 2 === 0);
+      const useSound = canSound && (wantSound || s.defSeen === 0);
+      return { word: w, activity: 'recall', phase: 'test', mode: useSound ? 'sound' : 'meaning', test: true };
+    });
+}
+
 /** How many words in a mission currently have an unresolved miss against them. */
 export function missedCount(missionId) {
   const mission = missionById(missionId);

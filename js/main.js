@@ -32,7 +32,7 @@ import { renderSlaughter } from './ui/slaughter.js';
 import { renderTeacher } from './ui/teacher.js';
 import { probeItems, PROBE_LABEL, DECODING } from './core/probe.js';
 import { recordPast } from './core/past.js';
-import { drillQueue, reviewQueue, allMissions, missionProgress } from './core/mission.js';
+import { drillQueue, reviewQueue, spellingTestQueue, allMissions, missionProgress } from './core/mission.js';
 import { missionById } from './content/lexicon.js';
 import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
@@ -485,7 +485,7 @@ function summary(plan, correct, newlyMet) {
 }
 
 function openSlaughter() {
-  renderSlaughter(app, { onBack: home, onDrill: runSlaughter, onReview: runReview });
+  renderSlaughter(app, { onBack: home, onDrill: runSlaughter, onReview: runReview, onTest: runSpellingTest });
 }
 
 /**
@@ -521,6 +521,93 @@ function runSlaughter(missionId) {
     mission: missionId,
     onDone: openSlaughter,
   });
+}
+
+/**
+ * THE SPELLING TEST. Like a probe, this does not go through runSession: a test
+ * that quietly drops words when he is struggling, or appends an easy one so it
+ * does not end on a failure, is not a test. Every word on the list, once.
+ */
+async function runSpellingTest(missionId, mode = 'sound') {
+  const S = load();
+  const mission = missionById(missionId);
+  const seq = spellingTestQueue(missionId, { mode });
+  if (!seq.length) return openSlaughter();
+
+  const rows = [];
+  let aborted = false;
+
+  for (let i = 0; i < seq.length; i++) {
+    const step = seq[i];
+    app.innerHTML = `
+      <div class="topbar">
+        <button class="btn ghost" data-act="quit">Stop</button>
+        <div class="spacer"></div>
+        <span class="pill">${i + 1} / ${seq.length}</span>
+      </div>
+      <div class="progress">${seq.map((_, k) =>
+        `<i class="${k < i ? 'done' : k === i ? 'now' : ''}"></i>`).join('')}</div>
+      <div id="stage"></div>`;
+    // The progress bar deliberately does NOT mark hits and misses during a
+    // test. Watching a row of red squares accumulate while you are still being
+    // tested changes the test.
+    app.querySelector('[data-act="quit"]').onclick = () => {
+      if (!confirm('Stop the test? The words you have already done are kept.')) return;
+      aborted = true;
+      finishTest();
+    };
+
+    const res = await ACTIVITIES.recall(document.getElementById('stage'), step.word, {
+      personality: S.settings.personality, mode: step.mode, test: true,
+    });
+    if (aborted) return;
+
+    logPush({
+      activity: 'recall', item: step.word.id, correct: res.correct,
+      ms: Math.round(res.ms), credit: res.credit, detail: res.detail, phase: 'test',
+    });
+    for (const [mid, ok] of Object.entries(res.credit)) record(mid, ok, res.ms);
+    rows.push({ word: step.word, res });
+
+    await new Promise(r => {
+      const b = app.querySelector('[data-act="next"]');
+      if (b) b.addEventListener('click', r, { once: true });
+      else setTimeout(r, 400);
+    });
+    if (aborted) return;
+  }
+  finishTest();
+
+  function finishTest() {
+    flush();
+    toTop();
+    const right = rows.filter(r => r.res.correct).length;
+    const wrong = rows.filter(r => !r.res.correct);
+
+    app.innerHTML = `
+      <div class="topbar"><span class="brand">SPELLING TEST</span></div>
+      <div class="hero">
+        <h1 style="font-size:44px">${right} / ${rows.length}</h1>
+        <p class="msg plainmsg">${esc(mission.name)}</p>
+      </div>
+      ${wrong.length ? `
+        <div class="section-title">worth another look</div>
+        <table class="evidence-table report-table">
+          <tr><th>word</th><th>you wrote</th></tr>
+          ${wrong.map(r => `
+            <tr class="miss-row">
+              <td><b>${esc(r.word.display || r.word.text)}</b></td>
+              <td class="wrote"><i>${esc(r.res.detail?.given || '—')}</i></td>
+            </tr>`).join('')}
+        </table>` : `<p class="msg good">Every word on the list, cold. That is the whole test.</p>`}
+      <div class="homegrid" style="margin-top:24px">
+        ${wrong.length ? `<button class="btn primary big" data-act="review">Work on those ${wrong.length}</button>` : ''}
+        <button class="btn ${wrong.length ? '' : 'primary '}big" data-act="done">Done</button>
+      </div>`;
+    app.querySelector('[data-act="done"]').onclick = openSlaughter;
+    const rv = app.querySelector('[data-act="review"]');
+    if (rv) rv.onclick = () => runReview(missionId);
+  }
 }
 
 /** Break the gate word, get the chapter. The reward is made of the work. */
