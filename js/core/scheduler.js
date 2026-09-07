@@ -8,6 +8,7 @@
 import { MORPH, WORD_LIST, DETECTIVE, PSEUDO, drillableMorphemes } from '../content/lexicon.js';
 import { level, LEVEL, entry } from './mastery.js';
 import { impostorItems } from './lookalike.js';
+import { antiCompensationExtra } from './drills.js';
 import { itemHistory } from './log.js';
 
 const MIX = { weak: 0.55, review: 0.25, fresh: 0.20 };
@@ -152,6 +153,14 @@ export function planSession({ items = 14, maxLevel = 5 } = {}) {
       const lastMain = seq.findLastIndex(s => s.phase === 'main');
       seq.splice(lastMain < 0 ? seq.length : lastMain, 0, impostors[1]);
     }
+  }
+
+  // One rotating anti-compensation item — distorted text or letters read
+  // aloud — dropped into the middle of the run.
+  const extra = antiCompensationExtra();
+  if (extra.length) {
+    const mid = Math.max(1, Math.floor(seq.length / 2));
+    seq.splice(mid, 0, extra[0]);
   }
 
   // One invented word per session, at the end of the main block. It is the

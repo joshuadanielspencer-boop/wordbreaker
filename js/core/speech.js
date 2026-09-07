@@ -67,6 +67,37 @@ export function say(text, { rate = 0.85 } = {}) {
   }
 }
 
+/**
+ * Spell a word out letter by letter, using letter NAMES — Kilpatrick is
+ * explicit that oral decoding uses names, not sounds. Letters are queued as
+ * separate utterances with a gap, because handing the engine "b r i c k" as
+ * one string gets it read as a word.
+ *
+ * @returns a cancel function, so leaving the activity stops the reading.
+ */
+export function spellAloud(text, { gap = 620, rate = 0.9 } = {}) {
+  if (!speechAvailable()) return () => {};
+  const letters = [...text.toUpperCase()].filter(c => /[A-Z]/.test(c));
+  let i = 0, timer = null, cancelled = false;
+  stopSpeaking();
+
+  const next = () => {
+    if (cancelled || i >= letters.length) return;
+    try {
+      const u = new SpeechSynthesisUtterance(letters[i]);
+      u.voice = cached;
+      u.lang = cached.lang;
+      u.rate = rate;
+      speechSynthesis.speak(u);
+    } catch {}
+    i++;
+    timer = setTimeout(next, gap);
+  };
+  next();
+
+  return () => { cancelled = true; clearTimeout(timer); stopSpeaking(); };
+}
+
 export function stopSpeaking() {
   try { speechSynthesis.cancel(); } catch {}
 }

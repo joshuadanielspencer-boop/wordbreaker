@@ -58,9 +58,20 @@ their strangeness reads as a puzzle rather than as remediation.
 
 | Activity | Technique | What it defeats | Measures |
 |---|---|---|---|
-| **Impostor Row** | §5 look-alike words | first-letter cue, word shape, length | discrimination accuracy + time |
-| **Ransom Note** | §20–24 distorted text | word shape, whole-word recognition | accuracy per distortion type |
-| **Spell It Out** | #11 oral decoding | everything visual | orthographic memory |
+| **Impostor Row** ✅ | §5 look-alike words | first-letter cue, word shape, length | discrimination accuracy + time |
+| **Ransom Note** ✅ | §20–24 distorted text | word shape, whole-word recognition | accuracy per distortion type |
+| **Spell It Out** ✅ | #11 oral decoding | everything visual | orthographic memory |
+
+Phase 1 is built. All three are scheduled into ordinary sessions rather than
+placed behind buttons: two Impostor Row items plus one rotating
+Ransom/Spell-It-Out item, three of about eighteen. Both drills draw only on
+words already MET — an unfamiliar word would confound the measurement, since a
+low score would no longer say anything about the habit.
+
+Ransom Note rotates its six distortions least-recently-used first, because
+adapting to one type is precisely the failure mode it exists to prevent, and it
+logs accuracy per distortion rather than pooled so the diagnostic signal
+survives.
 
 Look-alike sets are **generated**, not transcribed: Appendix G's OCR is wrecked
 by its two-column layout, and Kilpatrick says outright the printed sets are

@@ -518,3 +518,34 @@ body {
   text-align: center; font-size: 21px; font-weight: 700; letter-spacing: .01em;
   padding: 18px 12px; font-variant-ligatures: none;
 }
+
+/* ---------- ransom note ---------- */
+.ransom-card { text-align: center; padding: 30px 18px; }
+.ransom-stage {
+  min-height: 130px; display: flex; align-items: center; justify-content: center;
+  overflow-x: auto;
+}
+.ransom-word { font-size: clamp(28px, 7vw, 46px); font-weight: 800; letter-spacing: -.01em; }
+.ransom-word.caps { letter-spacing: .04em; }
+.ransom-word.spaced { letter-spacing: .4em; padding-left: .4em; font-size: clamp(24px, 5.5vw, 38px); }
+.ransom-word.rotated { display: inline-block; transform: rotate(180deg); }
+.ransom-word.vertical {
+  display: flex; flex-direction: column; line-height: .96;
+  /* A stacked word gets tall fast — 14 letters at full size was 650px. */
+  font-size: clamp(19px, 3.4vw, 26px); letter-spacing: .06em;
+}
+.ransom-word.vertical i { font-style: normal; }
+/* Every letter a different face, size and weight: no shared silhouette. */
+.ransom-word .mf { font-style: normal; }
+.mf0 { font-family: Georgia, serif; font-size: 1.05em; }
+.mf1 { font-family: ui-monospace, Menlo, monospace; font-size: .82em; font-weight: 500; }
+.mf2 { font-family: "Comic Sans MS", "Chalkboard SE", cursive; font-size: 1.12em; }
+.mf3 { font-family: Impact, "Haettenschweiler", sans-serif; font-size: .95em; letter-spacing: .04em; }
+.ransom-kind {
+  margin: 18px 0 0; font-size: 11px; text-transform: uppercase;
+  letter-spacing: .1em; font-weight: 700; color: var(--ink-dim);
+}
+
+/* ---------- spell it out ---------- */
+.spellout-card { text-align: center; }
+.spellout-card .shape { justify-content: center; margin-top: 14px; }

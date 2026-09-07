@@ -431,6 +431,62 @@ export const BANKS = {
     ],
   },
 
+  ransomRight: {
+    plain: ['Correct.', 'Yes — that\'s it.', 'Read it anyway. Good.'],
+    flavor: [
+      'Correct. Upside down, backwards, whatever — the letters are still the letters.',
+      'Yes. None of that mangling helped it hide.',
+      'Correct. It looked nothing like a word and you read it as one.',
+    ],
+    joke: [
+      'Correct. I did everything short of setting it on fire and you read it anyway.',
+      'Yes. That word was in disguise and the disguise was terrible.',
+      'Correct. The word has asked to be put back the right way up. Denied.',
+    ],
+    absurd: [
+      'CORRECT.\nThe word has been rotated back to its original position.\nIt is disoriented and would like to sit down.',
+    ],
+  },
+
+  ransomWrong: {
+    plain: [
+      'Not quite. Take the letters one at a time.',
+      'Not that word — start at the beginning and work across.',
+      'Close. Straighten it out if you need to.',
+    ],
+    flavor: [
+      'Not yet. Ignore what it looks like; just read the letters in order.',
+      'That is a reasonable guess at the shape. The shape is lying to you.',
+    ],
+  },
+
+  spelloutRight: {
+    plain: ['Correct.', 'Yes.', 'That\'s the word.'],
+    flavor: [
+      'Correct — and nothing was ever on screen.',
+      'Right. You built that word out of nothing but letter names.',
+      'Correct. Held the whole sequence and worked it out.',
+    ],
+    joke: [
+      'Correct. I read you a list of letters and you turned it into a word. Witchcraft.',
+      'Yes. That is the same trick as reading, run backwards, at half speed.',
+    ],
+    absurd: [
+      'CORRECT.\nThe letters have been informed that they spelled something.\nThey had no idea.',
+    ],
+  },
+
+  spelloutWrong: {
+    plain: [
+      'Not that one — listen again.',
+      'Not quite. Try writing the letters down as they come.',
+    ],
+    flavor: [
+      'Not yet. Play it again and catch the middle letters.',
+      'Close. The start was right — it is the middle that got away.',
+    ],
+  },
+
   impostorRight: {
     plain: ['Correct.', 'That was the one.', 'Right — and they all looked the same.'],
     flavor: [
@@ -599,5 +655,5 @@ export const BANKS = {
 // escalate past `flavor`, whatever the personality setting says.
 export const GENTLE_CONTEXTS = new Set([
   'error', 'errorAutopsy', 'errorEquation', 'errorRepeat', 'hint',
-  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp', 'spellWrong', 'recallWrong', 'impostorWrong',
+  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp', 'spellWrong', 'recallWrong', 'impostorWrong', 'ransomWrong', 'spelloutWrong',
 ]);
