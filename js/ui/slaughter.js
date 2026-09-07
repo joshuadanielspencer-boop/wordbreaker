@@ -7,6 +7,13 @@ export function renderSlaughter(app, { onBack, onDrill, onReview, onTest }) {
   window.scrollTo(0, 0);
   const missions = allMissions();
 
+  // With one mission the list is a screen containing a single card that you
+  // have to tap to get anywhere — an extra step that looks like a dead end,
+  // and the reason the spelling test was hard to find. Go straight in.
+  if (missions.length === 1) {
+    return renderMission(app, missions[0].mission.id, { onBack, onDrill, onReview, onTest });
+  }
+
   app.innerHTML = `
     <div class="topbar">
       <button class="btn ghost" data-act="back">Back</button>

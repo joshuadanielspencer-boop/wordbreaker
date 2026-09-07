@@ -363,17 +363,22 @@ have at least three pieces, and be unique across chapters.
 
 ### The home screen
 
-One daily action and three doors. `Start` is large; **Spelling Slaughter**,
-**Show the Middle** and **Your collection** (the Codex, the Expedition and Make
-it Boring) are secondary; the manner setting and **Teacher** sit in a footer.
+One daily action and two doors. `Start` is large; **Spelling Slaughter** and
+**Your collection** (the Codex, the Expedition and Make it Boring) are
+secondary; the manner setting and **Teacher** sit in a footer. **Show the
+Middle** is deliberately not offered to the learner — the maths strand competes
+for attention with the reading work, so it starts from Teacher instead.
 Nothing else is on it — no counters, no stats row — because seven equal buttons
 meant nothing signalled which one was for today, and the running totals were
 both most of the page's text and a score he had not earned in the session.
 
 Inside a mission, the actions come **before** the word board: `Take the
-spelling test`, `Practise`, `Fix the misses`. The test used to be three taps
-down behind a mission card that read as a progress bar rather than a button,
-which is exactly why it could not be found. The home tile says *a test is
+spelling test`, `Practise`, `Fix the misses`. And when there is only one
+mission, tapping Spelling Slaughter goes **straight into it** rather than
+showing a list containing a single card — that intermediate screen was the
+reason the test could not be found, because the card it held read as a
+progress bar rather than a button. The path is now two taps: home → Spelling
+Slaughter → the test is the first thing on the screen. The home tile says *a test is
 ready* once a word has been practised but never produced cold.
 
 Pop-ups are for decisions, never destinations — currently just the manner

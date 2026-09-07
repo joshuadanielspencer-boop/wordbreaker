@@ -209,15 +209,10 @@ function home() {
       <button class="btn primary huge" data-act="start">
         <b>Start</b><span>ten minutes</span>
       </button>
-      <div class="doorrow">
-        <button class="btn door" data-act="slaughter">
-          <b>Spelling Slaughter</b>
-          <span>${testReady ? 'a test is ready' : 'school’s list'}</span>
-        </button>
-        <button class="btn door" data-act="math">
-          <b>Show the Middle</b><span>numbers</span>
-        </button>
-      </div>
+      <button class="btn door wide" data-act="slaughter">
+        <b>Spelling Slaughter</b>
+        <span>${testReady ? 'school’s list · a spelling test is ready' : 'school’s list'}</span>
+      </button>
       <button class="btn door wide" data-act="collection">
         <b>Your collection</b><span>the codex, the story, the boring shelf</span>
       </button>
@@ -236,7 +231,6 @@ function home() {
   app.querySelector('[data-act="parent"]').onclick = teacherView;
   const backup = app.querySelector('[data-act="backup"]');
   if (backup) backup.onclick = () => download(exportProfile(), S.name).then(home);
-  app.querySelector('[data-act="math"]').onclick = runMath;
   app.querySelector('[data-act="slaughter"]').onclick = openSlaughter;
   app.querySelector('[data-act="switch"]').onclick = () => { signOut(); picker(); };
   app.querySelector('[data-act="personality"]').onclick = personalityPicker;
@@ -764,6 +758,7 @@ function teacherView() {
     onBack: home,
     onRunProbe: runProbe,
     onSavePast: (levels, note) => { recordPast(levels, note); teacherView(); },
+    onMath: runMath,
     onRadar: () => renderRadar(app, {
       onBack: teacherView,
       onPractice: words => runSession({

@@ -114,8 +114,14 @@ export function renderTeacher(app, opts) {
       <button class="btn big" data-act="spelling">Spelling report</button>
       <button class="btn big" data-act="progress">What keeps going wrong</button>
       <button class="btn big" data-act="radar">Hard Word Radar &nbsp;·&nbsp; scan a real page</button>
+      <button class="btn big" data-act="math">Show the Middle &nbsp;·&nbsp; the maths strand</button>
       ${form ? `<button class="btn big" data-act="past-load">Change the PAST form</button>` : ''}
-    </div>`;
+    </div>
+    <p class="msg plainmsg fineprint">
+      Show the Middle is off the child's home screen deliberately. It is the
+      same "show your working" move applied to numbers, and it was competing
+      for attention with the reading work. Start it from here when you want it.
+    </p>`;
 
   app.querySelector('[data-act="back"]').onclick = onBack;
   app.querySelector('[data-act="past"]').onclick = () => renderPastForm(app, opts);
@@ -131,6 +137,7 @@ export function renderTeacher(app, opts) {
   // Radar moved here off the child's home screen: pasting in a page of what he
   // is reading is something an adult does, not a thing he picks on a Tuesday.
   app.querySelector('[data-act="radar"]').onclick = opts.onRadar;
+  app.querySelector('[data-act="math"]').onclick = opts.onMath;
 }
 
 // -------------------------------------------------------------- evidence view
