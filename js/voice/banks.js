@@ -431,6 +431,63 @@ export const BANKS = {
     ],
   },
 
+  dictationClean: {
+    plain: ['Correct. First go.', 'Spelled it cold.'],
+    flavor: [
+      'Correct, first time, from nothing but the sounds. That is the whole skill.',
+      'You had never seen that word because nobody has. You spelled it anyway.',
+    ],
+    joke: [
+      'Correct. That word did not exist until about nine seconds ago and you have already spelled it.',
+      'First go. I made that up specifically so you could not have memorised it.',
+    ],
+    absurd: [
+      'SPELLED CORRECTLY.\\nThe word has been granted provisional existence.\\nIt is very grateful.',
+    ],
+  },
+
+  dictationRight: {
+    plain: ['Correct.', 'That works.', 'Yes — that spells it.'],
+    flavor: [
+      'Correct. The sounds are what matter here, and you got them.',
+      'That spells what you heard. Good.',
+    ],
+    joke: ['Correct. Took a couple of goes, which is fine — the word is imaginary and has no feelings.'],
+    absurd: [],
+  },
+
+  dictationWrong: {
+    plain: [
+      'Not those letters. Listen for each sound in turn.',
+      'Not quite — play it again and go sound by sound.',
+    ],
+    flavor: [
+      'Not yet. Say it slowly yourself and write down each sound as it comes.',
+      'Close. One sound has the wrong letters on it.',
+    ],
+  },
+
+  soundHuntRight: {
+    plain: ['Correct — {grapheme}.', 'Yes, {grapheme}.'],
+    flavor: [
+      'Correct. You heard the sound and knew which letters make it.',
+      'Yes — {grapheme}. That is the direction spelling actually runs.',
+    ],
+    joke: ['Correct. You picked letters out of a noise. That is genuinely impressive and I refuse to elaborate.'],
+    absurd: [],
+  },
+
+  soundHuntWrong: {
+    plain: [
+      'Not that one — listen again for the sound.',
+      'Not quite. Play it and listen to the very start.',
+    ],
+    flavor: [
+      'Not yet. Say the word yourself and listen to which part is which.',
+      'Close. Two of those make sounds that are easy to mix up.',
+    ],
+  },
+
   ransomRight: {
     plain: ['Correct.', 'Yes — that\'s it.', 'Read it anyway. Good.'],
     flavor: [
@@ -655,5 +712,5 @@ export const BANKS = {
 // escalate past `flavor`, whatever the personality setting says.
 export const GENTLE_CONTEXTS = new Set([
   'error', 'errorAutopsy', 'errorEquation', 'errorRepeat', 'hint',
-  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp', 'spellWrong', 'recallWrong', 'impostorWrong', 'ransomWrong', 'spelloutWrong',
+  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp', 'spellWrong', 'recallWrong', 'impostorWrong', 'ransomWrong', 'spelloutWrong', 'dictationWrong', 'soundHuntWrong',
 ]);

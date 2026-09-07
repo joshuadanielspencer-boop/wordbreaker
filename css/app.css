@@ -549,3 +549,16 @@ body {
 /* ---------- spell it out ---------- */
 .spellout-card { text-align: center; }
 .spellout-card .shape { justify-content: center; margin-top: 14px; }
+
+/* ---------- nonsense dictation & sound hunt ---------- */
+.dictation-card { position: relative; text-align: center; padding-top: 34px; }
+.dictation-card .shape { justify-content: center; margin-top: 14px; }
+.tile-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px; margin-top: 16px;
+}
+.opt.tile {
+  text-align: center; font-family: var(--mono); font-size: 24px; font-weight: 700;
+  padding: 20px 10px; letter-spacing: .06em;
+}
+.opt.tile.none { font-family: var(--font); font-size: 14px; letter-spacing: 0; grid-column: 1 / -1; }

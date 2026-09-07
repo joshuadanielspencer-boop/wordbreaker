@@ -19,6 +19,8 @@ import { mount as recall } from './activities/recall.js';
 import { mount as impostor } from './activities/impostor.js';
 import { mount as ransom } from './activities/ransom.js';
 import { mount as spellout } from './activities/spellout.js';
+import { mount as dictation } from './activities/dictation.js';
+import { mount as soundhunt } from './activities/soundhunt.js';
 import { makeProblem, pickSkill, SKILLS, LADDER } from './content/math.js';
 import { renderCodex } from './ui/codex.js';
 import { renderRadar } from './ui/radar.js';
@@ -30,7 +32,7 @@ import { drillQueue, allMissions, missionProgress } from './core/mission.js';
 import { missionById } from './content/lexicon.js';
 import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
-const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell, recall, impostor, ransom, spellout };
+const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell, recall, impostor, ransom, spellout, dictation, soundhunt };
 const PERSONALITIES = ['normal', 'funny', 'ridiculous', 'unsupervised'];
 const app = document.getElementById('app');
 
@@ -271,7 +273,9 @@ async function runSession(customPlan) {
   // an Event here and quietly produce a plan with no `seq`.
   const plan = (customPlan && Array.isArray(customPlan.seq))
     ? customPlan
-    : planSession({ items: 14 });
+    // Base count trimmed as Kilpatrick drills were added: seven of those now
+    // join every session, and the total is what has to stay under ten minutes.
+    : planSession({ items: 10 });
   const startedAt = Date.now();
   let correct = 0;
   const results = [];
@@ -310,8 +314,11 @@ async function runSession(customPlan) {
 
     // A couple of activities work on the whole step rather than on a single
     // word: Impostor Row needs the SET, Ransom Note needs the distortion.
-    const subject = (step.activity === 'impostor' || step.activity === 'ransom')
-      ? step : step.word;
+    // Several activities need the whole step, not just a word: Impostor Row
+    // needs the SET, Ransom Note the distortion, and the nonsense drills the
+    // pattern or grapheme family.
+    const WHOLE_STEP = ['impostor', 'ransom', 'dictation', 'soundhunt'];
+    const subject = WHOLE_STEP.includes(step.activity) ? step : step.word;
     const res = await ACTIVITIES[step.activity](
       document.getElementById('stage'), subject,
       { personality: S.settings.personality, mode: step.mode });

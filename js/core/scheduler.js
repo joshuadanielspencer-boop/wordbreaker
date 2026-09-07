@@ -9,6 +9,7 @@ import { MORPH, WORD_LIST, DETECTIVE, PSEUDO, drillableMorphemes } from '../cont
 import { level, LEVEL, entry } from './mastery.js';
 import { impostorItems } from './lookalike.js';
 import { antiCompensationExtra } from './drills.js';
+import { dictationItems, soundHuntItems } from './nonsensedrills.js';
 import { itemHistory } from './log.js';
 
 const MIX = { weak: 0.55, review: 0.25, fresh: 0.20 };
@@ -154,6 +155,15 @@ export function planSession({ items = 14, maxLevel = 5 } = {}) {
       seq.splice(lastMain < 0 ? seq.length : lastMain, 0, impostors[1]);
     }
   }
+
+  // Nonsense-word work: two dictation items and one sound hunt. Dictation is
+  // the primary outcome variable, so it runs every session without exception —
+  // a measure taken only when convenient is not a measure.
+  const nonsense = [...dictationItems(2), ...soundHuntItems(1)];
+  nonsense.forEach((it, k) => {
+    const at = Math.min(seq.length, 4 + k * 4);
+    seq.splice(at, 0, it);
+  });
 
   // One rotating anti-compensation item — distorted text or letters read
   // aloud — dropped into the middle of the run.
