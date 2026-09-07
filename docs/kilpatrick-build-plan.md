@@ -186,15 +186,28 @@ without replacement so one session cannot serve the same nonsense word twice.
 
 Twelve entries would be worse than any of them is good. Target shape:
 
+Built. The shape that shipped is one level flatter than the sketch above:
+
 ```
-Start            the daily mix — now draws blocks from a wider pool
-Spelling Slaughter   curriculum lists
+Start                the daily mix, as one big primary action
+Spelling Slaughter   curriculum lists — leads with "Take the spelling test"
 Show the Middle      maths
-Hard Word Radar      paste real text
-The Codex            what he has collected
-The Expedition       the story
-Teacher              everything needing an adult, plus the evidence view
+Your collection      the Codex, the Expedition, Make it Boring
+                     ─────
+Computer: <manner>   a pop-up, not a blind cycle
+Teacher              everything needing an adult, the evidence view,
+                     and Hard Word Radar
 ```
+
+Three things drove it. Seven equal buttons meant nothing signalled which one
+was for *today*, so `Start` became physically large and everything else
+secondary. The per-button counters (`16/184`, `0/10`, `0 retired`, `0/20`) plus
+a stats row underneath were most of the text on the page, duplicated each
+other, and sat awkwardly against the rule that the app never shows him a score
+he did not earn in the session — they now live inside the screens they
+describe, and only the streak survives on the home screen. And Hard Word Radar
+was never a child's activity: pasting in a page of what he is reading is
+something an adult does, so it moved to Teacher.
 
 Make it Boring and the Phase 1/2/4 drills become **blocks inside a session**,
 scheduled like any other activity, rather than separate destinations. This also

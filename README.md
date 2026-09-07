@@ -361,6 +361,26 @@ for the attempt, not a prize for accuracy.
 Gate words are validated by `tools/check.mjs`: each must exist in the corpus,
 have at least three pieces, and be unique across chapters.
 
+### The home screen
+
+One daily action and three doors. `Start` is large; **Spelling Slaughter**,
+**Show the Middle** and **Your collection** (the Codex, the Expedition and Make
+it Boring) are secondary; the manner setting and **Teacher** sit in a footer.
+Nothing else is on it — no counters, no stats row — because seven equal buttons
+meant nothing signalled which one was for today, and the running totals were
+both most of the page's text and a score he had not earned in the session.
+
+Inside a mission, the actions come **before** the word board: `Take the
+spelling test`, `Practise`, `Fix the misses`. The test used to be three taps
+down behind a mission card that read as a progress bar rather than a button,
+which is exactly why it could not be found. The home tile says *a test is
+ready* once a word has been practised but never produced cold.
+
+Pop-ups are for decisions, never destinations — currently just the manner
+setting, which used to be a button that cycled blind through four states, so
+seeing the options meant pressing it four times. A modal with a keyboard up on
+an iPad is miserable, so everything else stays a real screen.
+
 ### Session shape
 
 Sessions used to end on their two hardest words, which is backwards for

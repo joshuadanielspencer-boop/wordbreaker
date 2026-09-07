@@ -206,6 +206,21 @@ export function spellingTestQueue(missionId, { mode = 'sound', include = 'unfini
     });
 }
 
+/**
+ * Is there anything worth testing yet? True once a word has been practised —
+ * autopsied and written — but never yet produced cold. Offering a test before
+ * anything has been taught would just be a list of words he has never seen,
+ * and the home screen would be nagging him to fail it.
+ */
+export function missionTestReady(missionId) {
+  const mission = missionById(missionId);
+  if (!mission) return false;
+  return mission.words.some(w => {
+    const s = wordStatus(w.text);
+    return !s.slaughtered && s.spelled > 0;
+  });
+}
+
 /** How many words in a mission currently have an unresolved miss against them. */
 export function missedCount(missionId) {
   const mission = missionById(missionId);

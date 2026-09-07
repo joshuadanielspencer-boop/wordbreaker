@@ -113,6 +113,7 @@ export function renderTeacher(app, opts) {
       <button class="btn big" data-act="evidence">Evidence — does word-level skill move?</button>
       <button class="btn big" data-act="spelling">Spelling report</button>
       <button class="btn big" data-act="progress">What keeps going wrong</button>
+      <button class="btn big" data-act="radar">Hard Word Radar &nbsp;·&nbsp; scan a real page</button>
       ${form ? `<button class="btn big" data-act="past-load">Change the PAST form</button>` : ''}
     </div>`;
 
@@ -127,6 +128,9 @@ export function renderTeacher(app, opts) {
   app.querySelector('[data-act="evidence"]').onclick = () => renderEvidence(app, opts);
   app.querySelector('[data-act="spelling"]').onclick = () => renderSpellingReport(app, opts);
   app.querySelector('[data-act="progress"]').onclick = () => renderProgress(app, opts);
+  // Radar moved here off the child's home screen: pasting in a page of what he
+  // is reading is something an adult does, not a thing he picks on a Tuesday.
+  app.querySelector('[data-act="radar"]').onclick = opts.onRadar;
 }
 
 // -------------------------------------------------------------- evidence view

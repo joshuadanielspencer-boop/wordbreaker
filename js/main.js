@@ -32,7 +32,7 @@ import { renderSlaughter } from './ui/slaughter.js';
 import { renderTeacher } from './ui/teacher.js';
 import { probeItems, PROBE_LABEL, DECODING } from './core/probe.js';
 import { recordPast } from './core/past.js';
-import { drillQueue, reviewQueue, spellingTestQueue, allMissions, missionProgress } from './core/mission.js';
+import { drillQueue, reviewQueue, spellingTestQueue, missionTestReady, allMissions, missionProgress } from './core/mission.js';
 import { missionById } from './content/lexicon.js';
 import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
@@ -178,11 +178,14 @@ function home() {
   if (!S) return picker();
   toTop();
 
-  const teach = collectableMorphemes();
-  const met = teach.filter(m => level(m.id) !== LEVEL.UNSEEN).length;
-  const boring = teach.filter(m => level(m.id) === LEVEL.BORING).length;
   const last = S.sessions[S.sessions.length - 1];
   const gap = last ? daysSince(last.ended) : null;
+  // The only count that survives onto the home screen is the streak. The rest
+  // — 16/184 pieces, 0/10 chapters, 0/20 slaughtered — were most of the text
+  // on the page, duplicated the stats row underneath them, and sat awkwardly
+  // against the rule that the app never shows him a score he did not earn in
+  // the session. They now live inside the screens they describe.
+  const testReady = allMissions().some(m => missionTestReady(m.mission.id));
 
   const greeting = S.sessions.length === 0
     ? 'Words are built out of parts. We are going to take them apart.'
@@ -203,23 +206,23 @@ function home() {
       <p class="msg plainmsg">${esc(greeting)}</p>
     </div>
     <div class="homegrid">
-      <button class="btn primary big" data-act="start">Start — 10 minutes</button>
-      <button class="btn big" data-act="codex">Codex &nbsp;·&nbsp; ${met}/${teach.length}</button>
-      <button class="btn big" data-act="radar">Hard Word Radar</button>
-      <button class="btn big" data-act="boring">Make it Boring &nbsp;·&nbsp; ${fluencySummary().retired} retired</button>
-      <button class="btn big" data-act="math">Show the Middle &nbsp;·&nbsp; numbers</button>
-      <button class="btn big" data-act="story">The Expedition &nbsp;·&nbsp; ${unlockedCount()}/${CHAPTERS.length}</button>
-      <button class="btn big" data-act="slaughter">Spelling Slaughter &nbsp;·&nbsp; ${(() => {
-        const m = allMissions();
-        return `${m.reduce((a, x) => a + x.done, 0)}/${m.reduce((a, x) => a + x.total, 0)}`;
-      })()}</button>
+      <button class="btn primary huge" data-act="start">
+        <b>Start</b><span>ten minutes</span>
+      </button>
+      <div class="doorrow">
+        <button class="btn door" data-act="slaughter">
+          <b>Spelling Slaughter</b>
+          <span>${testReady ? 'a test is ready' : 'school’s list'}</span>
+        </button>
+        <button class="btn door" data-act="math">
+          <b>Show the Middle</b><span>numbers</span>
+        </button>
+      </div>
+      <button class="btn door wide" data-act="collection">
+        <b>Your collection</b><span>the codex, the story, the boring shelf</span>
+      </button>
     </div>
-    <div class="stats">
-      <div class="stat"><b>${S.sessions.length}</b><span>sessions</span></div>
-      <div class="stat"><b>${met}</b><span>pieces met</span></div>
-      <div class="stat"><b>${boring}</b><span>now boring</span></div>
-    </div>
-    <div class="stats" style="margin-top:10px">
+    <div class="footrow">
       <button class="btn ghost" data-act="personality">Computer: ${S.settings.personality}</button>
       <button class="btn ghost" data-act="parent">Teacher</button>
     </div>
@@ -229,18 +232,56 @@ function home() {
       <button class="btn ghost" data-act="backup">Save a copy</button></p>` : ''}`;
 
   app.querySelector('[data-act="start"]').onclick = () => runSession();
-  app.querySelector('[data-act="codex"]').onclick = () => renderCodex(app, { onBack: home });
+  app.querySelector('[data-act="collection"]').onclick = collection;
   app.querySelector('[data-act="parent"]').onclick = teacherView;
   const backup = app.querySelector('[data-act="backup"]');
   if (backup) backup.onclick = () => download(exportProfile(), S.name).then(home);
   app.querySelector('[data-act="math"]').onclick = runMath;
   app.querySelector('[data-act="slaughter"]').onclick = openSlaughter;
+  app.querySelector('[data-act="switch"]').onclick = () => { signOut(); picker(); };
+  app.querySelector('[data-act="personality"]').onclick = personalityPicker;
+}
+
+/** Codex, story and fluency shelf — the three things he collects rather than
+ *  practises. Grouped so the home screen has one daily action and three doors
+ *  instead of seven equal buttons competing for the same press. */
+function collection() {
+  const S = load();
+  toTop();
+  const teach = collectableMorphemes();
+  const met = teach.filter(m => level(m.id) !== LEVEL.UNSEEN).length;
+  const boring = teach.filter(m => level(m.id) === LEVEL.BORING).length;
+
+  app.innerHTML = `
+    <div class="topbar">
+      <button class="btn ghost" data-act="back">Back</button>
+      <div class="spacer"></div>
+      <span class="pill">${S.streak.count} day streak</span>
+    </div>
+    <div class="hero" style="padding:8px 0 18px">
+      <h1 style="font-size:32px">Your collection</h1>
+      <p>Everything you have taken apart and kept.</p>
+    </div>
+    <div class="homegrid">
+      <button class="btn door wide" data-act="codex">
+        <b>The Codex</b><span>${met} of ${teach.length} pieces met</span>
+      </button>
+      <button class="btn door wide" data-act="story">
+        <b>The Expedition</b><span>${unlockedCount()} of ${CHAPTERS.length} chapters open</span>
+      </button>
+      <button class="btn door wide" data-act="boring">
+        <b>Make it Boring</b><span>${fluencySummary().retired} words retired · ${boring} pieces gone dull</span>
+      </button>
+    </div>`;
+
+  app.querySelector('[data-act="back"]').onclick = home;
+  app.querySelector('[data-act="codex"]').onclick = () => renderCodex(app, { onBack: collection });
   app.querySelector('[data-act="story"]').onclick = () => renderLibrary(app, {
-    onBack: home,
+    onBack: collection,
     onRead: ch => renderChapter(app, ch, { onDone: home }),
   });
   app.querySelector('[data-act="boring"]').onclick = () => renderBoring(app, {
-    onBack: home,
+    onBack: collection,
     onStart: items => runSession({
       mode: 'boring',
       before: boringItems().map(i => i.text),
@@ -249,25 +290,71 @@ function home() {
       seq: items.map(i => ({ word: i.word, activity: 'autopsy', phase: 'boring' })),
     }),
   });
-  app.querySelector('[data-act="radar"]').onclick = () => renderRadar(app, {
-    onBack: home,
-    onPractice: words => runSession({
-      targets: [...new Set(words.flatMap(w => w.morphemes))],
-      seq: words.map(w => ({ word: w, activity: 'autopsy', phase: 'radar' })),
-    }),
+}
+
+// ------------------------------------------------------------------ pop-ups
+//
+// A modal is right for a decision and wrong for a destination. These two are
+// decisions. Everything else in the app stays a real screen, because a sheet
+// with a keyboard up on an iPad is miserable.
+
+function modal(title, bodyHtml) {
+  const el = document.createElement('div');
+  el.className = 'modal-wrap';
+  el.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+      <div class="modal-head">
+        <b>${esc(title)}</b>
+        <button class="btn ghost tiny" data-act="close" aria-label="close">✕</button>
+      </div>
+      ${bodyHtml}
+    </div>`;
+  document.body.appendChild(el);
+  const close = () => el.remove();
+  el.querySelector('[data-act="close"]').onclick = close;
+  // Clicking the backdrop closes; clicking the sheet itself must not.
+  el.onclick = e => { if (e.target === el) close(); };
+  document.addEventListener('keydown', function esc2(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc2); }
   });
-  app.querySelector('[data-act="switch"]').onclick = () => { signOut(); picker(); };
-  app.querySelector('[data-act="personality"]').onclick = () => {
-    const i = PERSONALITIES.indexOf(S.settings.personality);
-    S.settings.personality = PERSONALITIES[(i + 1) % PERSONALITIES.length];
+  return { el, close };
+}
+
+/**
+ * The personality setting used to be a button that cycled blind: to see the
+ * four options you had to press it four times and read the label each time.
+ * Showing them all at once with what each one does is the entire fix.
+ */
+function personalityPicker() {
+  const S = load();
+  const WHAT = {
+    normal: 'Almost always plain. The odd dry aside.',
+    funny: 'Jokes turn up now and then, which is what makes them land.',
+    ridiculous: 'Considerably less restraint.',
+    unsupervised: 'No restraint at all. This is the joke.',
+  };
+  const { el, close } = modal('The computer’s manner', `
+    <div class="modal-list">
+      ${PERSONALITIES.map(p => `
+        <button class="btn opt-row ${p === S.settings.personality ? 'on' : ''}" data-p="${p}">
+          <b>${p}</b><span>${WHAT[p]}</span>
+        </button>`).join('')}
+    </div>
+    <p class="msg plainmsg fineprint">
+      It never jokes about a wrong answer, at any setting.
+    </p>`);
+
+  el.querySelectorAll('[data-p]').forEach(b => b.onclick = () => {
+    S.settings.personality = b.dataset.p;
     save();
+    close();
+    home();
     if (S.settings.personality === 'unsupervised') {
-      home();
       const p = app.querySelector('.hero p');
       p.textContent = 'UNSUPERVISED MODE\nThis setting was apparently approved by an adult.\nI have questions.';
       p.classList.add('shout');
-    } else home();
-  };
+    }
+  });
 }
 
 // ----------------------------------------------------------------- session
@@ -677,6 +764,13 @@ function teacherView() {
     onBack: home,
     onRunProbe: runProbe,
     onSavePast: (levels, note) => { recordPast(levels, note); teacherView(); },
+    onRadar: () => renderRadar(app, {
+      onBack: teacherView,
+      onPractice: words => runSession({
+        targets: [...new Set(words.flatMap(w => w.morphemes))],
+        seq: words.map(w => ({ word: w, activity: 'autopsy', phase: 'radar' })),
+      }),
+    }),
     onExport: () => download(exportProfile(), S.name),
     onReset: () => {
       if (confirm(`Wipe all of ${S.name}'s progress? This cannot be undone.`)) {

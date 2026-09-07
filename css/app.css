@@ -737,3 +737,64 @@ body {
 .past-answer b { color: var(--good); }
 .past-run .score-row { grid-template-columns: repeat(2, 1fr); }
 .fp-thin { color: var(--ink-dim); }
+
+/* ---------- home: one daily action, three doors ----------
+   Seven equal buttons meant nothing signalled which one was for today. The
+   hierarchy now does that work, so the counters could come off the front page
+   entirely and live inside the screens they describe. */
+.btn.huge {
+  display: flex; flex-direction: column; gap: 2px; align-items: center;
+  padding: 26px 20px; font-size: 15px;
+}
+.btn.huge b { font-size: 30px; line-height: 1.1; letter-spacing: -0.01em; }
+.btn.huge span { font-size: 13px; opacity: .7; font-weight: 400; }
+
+.doorrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn.door {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  text-align: left; padding: 16px 18px; min-height: 0;
+}
+.btn.door b { font-size: 16px; }
+.btn.door span { font-size: 12px; color: var(--ink-dim); font-weight: 400; line-height: 1.4; }
+.btn.door.wide { width: 100%; }
+.btn.primary.big span, .btn.primary.huge span { color: var(--accent-ink); }
+.btn.primary.big { display: flex; flex-direction: column; gap: 3px; align-items: center; }
+.btn.primary.big b { font-size: 18px; }
+.btn.primary.big span { font-size: 12px; opacity: .75; font-weight: 400; }
+
+.footrow {
+  display: flex; justify-content: center; gap: 10px; margin-top: 22px;
+  flex-wrap: wrap;
+}
+.group-label {
+  font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--ink-dim); margin: 14px 0 6px;
+}
+
+/* ---------- pop-ups ----------
+   For decisions, never for destinations. */
+.modal-wrap {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0, 0, 0, .45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; overflow-y: auto;
+}
+.modal {
+  background: var(--surface); border: 1.5px solid var(--line);
+  border-radius: 18px; padding: 18px; width: 100%; max-width: 420px;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.modal-head b { font-size: 17px; }
+.modal-list { display: flex; flex-direction: column; gap: 8px; }
+.btn.opt-row {
+  display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+  text-align: left; padding: 12px 14px; min-height: 0; width: 100%;
+}
+.btn.opt-row b { font-size: 15px; }
+.btn.opt-row span { font-size: 12px; color: var(--ink-dim); font-weight: 400; }
+.btn.opt-row.on { border-color: var(--ink); background: var(--surface-2); }
+.btn.opt-row.on span { color: var(--ink); }

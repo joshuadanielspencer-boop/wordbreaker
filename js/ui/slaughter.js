@@ -57,8 +57,25 @@ export function renderMission(app, id, { onBack, onDrill, onReview, onTest }) {
       <h1 style="font-size:30px">${mission.name}</h1>
       <p>${mission.subtitle}</p>
     </div>
+    <div class="homegrid">
+      ${done < total ? `
+        <button class="btn primary big" data-act="test">
+          <b>Take the spelling test</b>
+          <span>${total - done} word${total - done === 1 ? '' : 's'} · read aloud, no hints, one go each</span>
+        </button>` : ''}
+      ${done < total ? `
+        <button class="btn door wide" data-act="drill">
+          <b>Practise</b><span>take them apart, then write them</span>
+        </button>` : `<p class="msg good">Every word in this mission is finished.</p>`}
+      ${missed ? `
+        <button class="btn door wide" data-act="review">
+          <b>Fix the misses</b><span>${missed === 1 ? '1 word that keeps' : `${missed} words that keep`} going wrong</span>
+        </button>` : ''}
+    </div>
+
+    <div class="section-title">the words</div>
     ${groups.map(g => `
-      <div class="section-title">${g.label}</div>
+      <div class="group-label">${g.label}</div>
       <div class="slaughter-grid">${g.words.map(w => {
         const s = wordStatus(w.text);
         const state = s.slaughtered ? 'done' : s.cleanDays.size ? 'close' : s.seen ? 'started' : '';
@@ -69,21 +86,7 @@ export function renderMission(app, id, { onBack, onDrill, onReview, onTest }) {
             : s.cleanDays.size ? 'one clean spell' : s.seen ? `seen ${s.seen}×` : 'untouched'}${
             s.misses ? ` · ${s.misses} miss${s.misses === 1 ? '' : 'es'}` : ''}</span>
         </div>`;
-      }).join('')}</div>`).join('')}
-    <div class="homegrid" style="margin-top:20px">
-      ${done < total
-        ? `<button class="btn primary big" data-act="drill">Start the slaughter</button>`
-        : `<p class="msg good">Every word in this mission is finished.</p>`}
-      ${missed ? `<button class="btn big" data-act="review">Review the misses &nbsp;·&nbsp; ${missed} word${missed === 1 ? '' : 's'}</button>` : ''}
-      ${done < total ? `
-        <button class="btn big" data-act="test">Spelling test &nbsp;·&nbsp; ${total - done} word${total - done === 1 ? '' : 's'}</button>` : ''}
-    </div>
-    ${done < total ? `
-      <p class="msg plainmsg fineprint" style="text-align:center">
-        The test is the real thing: every word read aloud, nothing on screen,
-        no hints, one go each. It counts toward slaughtering a word, because a
-        test is the best evidence there is.
-      </p>` : ''}`;
+      }).join('')}</div>`).join('')}`;
 
   app.querySelector('[data-act="back"]').onclick = onBack;
   const d = app.querySelector('[data-act="drill"]');
