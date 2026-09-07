@@ -16,6 +16,7 @@ import { mount as invent } from './activities/invent.js';
 import { mount as middle } from './activities/middle.js';
 import { mount as spell } from './activities/spell.js';
 import { mount as recall } from './activities/recall.js';
+import { mount as impostor } from './activities/impostor.js';
 import { makeProblem, pickSkill, SKILLS, LADDER } from './content/math.js';
 import { renderCodex } from './ui/codex.js';
 import { renderRadar } from './ui/radar.js';
@@ -27,7 +28,7 @@ import { drillQueue, allMissions, missionProgress } from './core/mission.js';
 import { missionById } from './content/lexicon.js';
 import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
-const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell, recall };
+const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell, recall, impostor };
 const PERSONALITIES = ['normal', 'funny', 'ridiculous', 'unsupervised'];
 const app = document.getElementById('app');
 
@@ -305,8 +306,11 @@ async function runSession(customPlan) {
       <div id="stage"></div>`;
     app.querySelector('[data-act="quit"]').onclick = () => { aborted = true; finish(true); home(); };
 
+    // Impostor Row works on a SET, not a single word, so it takes the whole
+    // step as its item rather than step.word.
+    const subject = step.activity === 'impostor' ? step : step.word;
     const res = await ACTIVITIES[step.activity](
-      document.getElementById('stage'), step.word,
+      document.getElementById('stage'), subject,
       { personality: S.settings.personality, mode: step.mode });
     if (aborted) return;
 

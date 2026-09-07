@@ -431,6 +431,34 @@ export const BANKS = {
     ],
   },
 
+  impostorRight: {
+    plain: ['Correct.', 'That was the one.', 'Right — and they all looked the same.'],
+    flavor: [
+      'Correct. Six words, one letter of difference, and you found it.',
+      'Right. Guessing was no use there, which was rather the point.',
+      'Correct. Nothing about that row was a clue except the letters.',
+    ],
+    joke: [
+      'Correct. I deliberately made them all look identical and it did not work.',
+      'Right. I lined up six near-identical words specifically to catch you out. Disappointing.',
+    ],
+    absurd: [
+      'CORRECT.\nThe five decoy words have been returned to storage.\nThey are furious.',
+    ],
+  },
+
+  impostorWrong: {
+    plain: [
+      'Not that one — check the middle letters.',
+      'Close. They differ by one letter; find it.',
+      'Not quite. Read each one all the way through.',
+    ],
+    flavor: [
+      'Not yet. That is exactly the trap this row is built out of.',
+      'These are designed to look alike. Take the two closest and compare letter by letter.',
+    ],
+  },
+
   slaughterOpen: {
     plain: ['Spelling list. Let\'s go.', 'School words today.'],
     flavor: [
@@ -571,5 +599,5 @@ export const BANKS = {
 // escalate past `flavor`, whatever the personality setting says.
 export const GENTLE_CONTEXTS = new Set([
   'error', 'errorAutopsy', 'errorEquation', 'errorRepeat', 'hint',
-  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp', 'spellWrong', 'recallWrong',
+  'detectiveWrong', 'inventWrong', 'middleWrong', 'middleAddUp', 'spellWrong', 'recallWrong', 'impostorWrong',
 ]);

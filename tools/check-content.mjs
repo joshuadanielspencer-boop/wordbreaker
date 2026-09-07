@@ -5,6 +5,7 @@ import { WORD_SPECS, parseSpec } from '../js/content/words.js';
 import { NOTES } from '../js/content/notes.js';
 import { CHAPTERS } from '../js/content/story.js';
 import { MISSIONS, missionEntries } from '../js/content/missions.js';
+import { LOOKALIKE_SETS, setWords } from '../js/content/lookalikes.js';
 import { DERIVED_LITS } from '../js/content/notes-derived.js';
 import { readFileSync, existsSync } from 'node:fs';
 
@@ -15,6 +16,17 @@ const ALLOWLIST = new Set(['propel', 'overreact', 'uncoordinated']);
 const lexicon = existsSync(DICT)
   ? new Set(readFileSync(DICT, 'utf8').split('\n').map(w => w.toLowerCase()))
   : null;
+
+/** Levenshtein, for judging whether look-alike members are actually alike. */
+function editDistance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 0; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1,
+                         d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
 
 const errors = [], warnings = [];
 const seen = new Map();
@@ -64,7 +76,9 @@ for (const m of MISSIONS) {
     missionWords++;
     const item = parseSpec(rec.spec);
     for (const p of item.parts) {
-      if (!MORPHEMES[p.m]) errors.push(`${m.id} "${item.text}": unknown morpheme id "${p.m}"`);
+      if (!MORPHEMES[p.m]) { errors.push(`${m.id} "${item.text}": unknown morpheme id "${p.m}"`); continue; }
+      if (!observedForms.has(p.m)) observedForms.set(p.m, new Set());
+      observedForms.get(p.m).add(p.surface);
     }
     if (lexicon && !lexicon.has(item.text) && !ALLOWLIST.has(item.text))
       errors.push(`${m.id}: NOT A WORD: "${item.text}"  <-  ${rec.spec}`);
@@ -77,6 +91,37 @@ for (const m of MISSIONS) {
     if (missionSeen.has(item.text))
       warnings.push(`${m.id}: "${item.text}" appears twice in the mission list`);
     missionSeen.set(item.text, m.id);
+  }
+}
+
+// Look-alike sets: every member must be a real word, members must be distinct,
+// and a set prompted by MEANING must define every member — otherwise the item
+// is unanswerable, since sound cannot separate homophones.
+let lookalikeWords = 0;
+for (const s of LOOKALIKE_SETS) {
+  const ws = setWords(s);
+  lookalikeWords += ws.length;
+  if (ws.length < 2) errors.push(`look-alike set "${s.id}": needs at least two members`);
+  const texts = ws.map(x => x.w);
+  if (new Set(texts).size !== texts.length)
+    errors.push(`look-alike set "${s.id}": duplicate member`);
+  for (const x of ws) {
+    if (lexicon && !lexicon.has(x.w.replace(/'/g, '')) && !ALLOWLIST.has(x.w))
+      errors.push(`look-alike set "${s.id}": "${x.w}" is not a word`);
+    if (s.prompt === 'meaning' && !x.def)
+      errors.push(`look-alike set "${s.id}": "${x.w}" has no definition, but the set is prompted by meaning`);
+  }
+  // What actually makes a look-alike set work is not a shared first letter or
+  // a shared ending — `precede/proceed` differ on exactly the ending, which is
+  // the point of that set. It is that every member sits close enough to
+  // another member that telling them apart requires reading the letters.
+  for (const x of ws) {
+    const nearest = Math.min(...texts.filter(t => t !== x.w).map(t => editDistance(x.w, t)));
+    // Scaled by length: four edits apart is a lot in `cat`, and very little in
+    // `conscience`.
+    const limit = Math.max(2, Math.ceil(x.w.length * 0.4));
+    if (nearest > limit)
+      warnings.push(`look-alike set "${s.id}": "${x.w}" is ${nearest} edits from its nearest neighbour (limit ${limit} at ${x.w.length} letters) — too far to be confusable`);
   }
 }
 
@@ -98,6 +143,7 @@ const totalNotes = new Set([...Object.keys(NOTES), ...Object.keys(DERIVED_LITS)]
 console.log(`words: ${WORD_SPECS.length}   morphemes: ${Object.keys(MORPHEMES).length}`);
 console.log(`story: ${CHAPTERS.length} chapters, all gates verified`);
 console.log(`spelling slaughter: ${MISSIONS.length} mission(s), ${missionWords} words`);
+console.log(`look-alikes: ${LOOKALIKE_SETS.length} sets, ${lookalikeWords} words`);
 console.log(`notes: ${totalNotes}/${WORD_SPECS.length} (${Object.keys(NOTES).length} hand-written, ${withStory} with stories, ${Object.keys(DERIVED_LITS).length} derived)`);
 if (lexicon) console.log(`lexicon: ${DICT} (${lexicon.size} entries)`);
 else console.log('lexicon: NOT FOUND — real-word check skipped');

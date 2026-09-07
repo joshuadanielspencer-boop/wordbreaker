@@ -507,3 +507,14 @@ body {
   border-style: dashed; border-width: 2px;
 }
 .speak-big:hover { border-style: solid; }
+
+/* ---------- impostor row ---------- */
+.impostor-prompt { text-align: center; }
+.impostor-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px; margin-top: 16px;
+}
+.opt.impostor {
+  text-align: center; font-size: 21px; font-weight: 700; letter-spacing: .01em;
+  padding: 18px 12px; font-variant-ligatures: none;
+}

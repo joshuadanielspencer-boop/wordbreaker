@@ -7,6 +7,7 @@
 
 import { MORPH, WORD_LIST, DETECTIVE, PSEUDO, drillableMorphemes } from '../content/lexicon.js';
 import { level, LEVEL, entry } from './mastery.js';
+import { impostorItems } from './lookalike.js';
 import { itemHistory } from './log.js';
 
 const MIX = { weak: 0.55, review: 0.25, fresh: 0.20 };
@@ -139,6 +140,18 @@ export function planSession({ items = 14, maxLevel = 5 } = {}) {
     const sub = detPool[di++];
     if (sub) { step.word = sub.w; usedText.add(sub.w.text); }
     else step.activity = 'equation';        // genuinely nothing left to use
+  }
+
+  // Look-alike discrimination, twice a session. Kilpatrick wants this daily,
+  // so it is scheduled rather than parked behind a button nobody presses.
+  const impostors = impostorItems(2);
+  if (impostors.length) {
+    const firstMain = seq.findIndex(s => s.phase === 'main');
+    seq.splice(firstMain < 0 ? seq.length : firstMain + 2, 0, impostors[0]);
+    if (impostors[1]) {
+      const lastMain = seq.findLastIndex(s => s.phase === 'main');
+      seq.splice(lastMain < 0 ? seq.length : lastMain, 0, impostors[1]);
+    }
   }
 
   // One invented word per session, at the end of the main block. It is the
