@@ -378,7 +378,10 @@ mission, tapping Spelling Slaughter goes **straight into it** rather than
 showing a list containing a single card — that intermediate screen was the
 reason the test could not be found, because the card it held read as a
 progress bar rather than a button. The path is now two taps: home → Spelling
-Slaughter → the test is the first thing on the screen. The home tile says *a test is
+Slaughter → the test is the first thing on the screen. With more than one
+mission the list comes back, **newest first** — the list at the top is the one
+school is testing now — and every card carries its own `Take the test` button,
+so the test is still two taps and never hidden behind a card. The home tile says *a test is
 ready* once a word has been practised but never produced cold.
 
 Pop-ups are for decisions, never destinations — currently just the manner

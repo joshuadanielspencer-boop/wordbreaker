@@ -66,6 +66,8 @@ export const MORPHEMES = {
 
   omni:    { type:'prefix', gloss:'all, every',             origin:'latin',       forms:['omni'] },
   medi:    { type:'prefix', gloss:'middle',                 origin:'latin',       forms:['medi'] },
+  ab:      { type:'prefix', gloss:'away from, off',         origin:'latin',       forms:['ab','abs'],
+             lit:'Grows an s before a t: abstain, abstract. Same prefix, easier to say.' },
 
   // ---------- ROOTS ----------
   spect:  { type:'root', gloss:'to look, to watch',   origin:'latin', forms:['spect','spec','spic'] },
@@ -163,6 +165,26 @@ export const MORPHEMES = {
   spond:   { type:'root', gloss:'to promise, to answer', origin:'latin', forms:['spond','spons'] },
   merg:    { type:'root', gloss:'to dip, to plunge',   origin:'latin', forms:['merg','mers'] },
   vor:     { type:'root', gloss:'to eat, to devour',   origin:'latin', forms:['vor','vore'] },
+
+  // Spelling List 2.
+  christ:  { type:'root', gloss:'Christ — Greek for "the anointed one"', origin:'greek', forms:['christ'] },
+  ess:     { type:'root', gloss:'to be',               origin:'latin', forms:['ess'] },
+  flamm:   { type:'root', gloss:'flame',               origin:'latin', forms:['flamm','flam'] },
+  phys:    { type:'root', gloss:'nature, the body',    origin:'greek', forms:['phys'] },
+  apt:     { type:'root', gloss:'to fit',              origin:'latin', forms:['apt'] },
+  sider:   { type:'root', gloss:'to look at carefully', origin:'latin', forms:['sider'] },
+  hospit:  { type:'root', gloss:'guest, host',         origin:'latin', forms:['hospit','hosp'] },
+  par:     { type:'root', gloss:'to arrange, to set',  origin:'latin', forms:['par'] },
+  alien:   { type:'root', gloss:'belonging to someone else', origin:'latin', forms:['alien'] },
+  hor:     { type:'root', gloss:'to shudder',          origin:'latin', forms:['hor','horr'] },
+  ras:     { type:'root', gloss:'to scrape',           origin:'latin', forms:['ras','rad'] },
+  hab:     { type:'root', gloss:'to have, to hold',    origin:'latin', forms:['hab','hib','habit','hibit'] },
+  // abolish: the ab- is certain; what follows comes from Latin abolere and does
+  // not break down any further in English. It stays in one piece rather than
+  // being cut at -ish, which here is a French verb ending, not the -ish of
+  // "childish" — splitting it there would teach him something untrue.
+  olish:   { type:'root', gloss:'to wipe out',         origin:'latin', forms:['olish'],
+             lit:'The rest of abolish, after the ab-. It does not break down any further in English.' },
 
   // ---------- EVERYDAY BASES (Germanic) ----------
   // Low-friction warm-up stems. They also give the high-frequency English

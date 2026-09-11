@@ -11,7 +11,9 @@ import { readFileSync, existsSync } from 'node:fs';
 
 const DICT = '/usr/share/dict/words';
 // Real words the 1934 Webster's-derived system list simply predates or omits.
-const ALLOWLIST = new Set(['propel', 'overreact', 'uncoordinated']);
+// `programmable` predates computers; `non-christian` is a hyphenated compound,
+// which the list does not carry at all.
+const ALLOWLIST = new Set(['propel', 'overreact', 'uncoordinated', 'programmable', 'non-christian']);
 
 const lexicon = existsSync(DICT)
   ? new Set(readFileSync(DICT, 'utf8').split('\n').map(w => w.toLowerCase()))

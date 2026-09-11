@@ -25,22 +25,33 @@ export function renderSlaughter(app, { onBack, onDrill, onReview, onTest }) {
       <p>School's spelling list, run through the slicer. A word is finished when
       you can spell it cold, twice, on different days.</p>
     </div>
-    ${missions.map(({ mission, done, total, pct }) => `
-      <button class="mission-card" data-id="${mission.id}">
-        <div class="mission-head">
-          <b>${mission.name}</b>
-          <span class="mission-sub">${mission.subtitle}</span>
-          <span class="mission-count">${done}/${total}</span>
-        </div>
-        <span class="boring-bar"><i style="width:${pct}%"></i></span>
-      </button>`).join('')}`;
+    ${[...missions].reverse().map(({ mission, done, total, pct }) => `
+      <div class="mission-block">
+        <button class="mission-card" data-id="${mission.id}">
+          <div class="mission-head">
+            <b>${mission.name}</b>
+            <span class="mission-sub">${mission.subtitle}</span>
+            <span class="mission-count">${done}/${total}</span>
+          </div>
+          <span class="boring-bar"><i style="width:${pct}%"></i></span>
+        </button>
+        ${done < total ? `
+          <div class="mission-actions">
+            <button class="btn primary" data-test="${mission.id}">Take the test</button>
+            <button class="btn" data-drill="${mission.id}">Practise</button>
+            <button class="btn ghost" data-id="${mission.id}">See the words</button>
+          </div>` : `<p class="msg good">Every word finished.</p>`}
+      </div>`).join('')}`;
+  // Newest list first: the one at the top is the one school is testing now.
+  // And the test sits ON each card, not behind it. A card that reads as a
+  // progress bar is exactly how the test got lost the first time.
 
+  const back = () => renderSlaughter(app, { onBack, onDrill, onReview, onTest });
   app.querySelector('[data-act="back"]').onclick = onBack;
-  app.querySelectorAll('.mission-card').forEach(b =>
-    b.onclick = () => renderMission(app, b.dataset.id, {
-      onBack: () => renderSlaughter(app, { onBack, onDrill, onReview, onTest }),
-      onDrill, onReview, onTest,
-    }));
+  app.querySelectorAll('[data-id]').forEach(b =>
+    b.onclick = () => renderMission(app, b.dataset.id, { onBack: back, onDrill, onReview, onTest }));
+  app.querySelectorAll('[data-test]').forEach(b => b.onclick = () => onTest(b.dataset.test, 'sound'));
+  app.querySelectorAll('[data-drill]').forEach(b => b.onclick = () => onDrill(b.dataset.drill));
 }
 
 export function renderMission(app, id, { onBack, onDrill, onReview, onTest }) {
