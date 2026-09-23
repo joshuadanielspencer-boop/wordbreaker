@@ -15,7 +15,7 @@
 // flat line or a fast gain is a conversation with an evaluator, not something
 // an app should be doing on its own, and predictions.md says so explicitly.
 
-import { load } from '../core/store.js';
+import { load, backupStatus, persisted } from '../core/store.js';
 import {
   DECODING, SPELLING, PROBE_LABEL, runs, lastRun, due, baseline, movement, remaining,
 } from '../core/probe.js';
@@ -49,6 +49,7 @@ export function renderTeacher(app, opts) {
   window.scrollTo(0, 0);
   const S = load();
   const form = currentForm();
+  const backup = backupStatus();
 
   // Gate 0 is three separate baselines, and it is not "run" until all three
   // are. Listing them individually stops a half-taken baseline reading as a
@@ -88,6 +89,28 @@ export function renderTeacher(app, opts) {
         </div>`).join('')}
     </div>
 
+    <div class="section-title">the record on this device</div>
+    <p class="msg plainmsg ${backup.stale ? 'teacher-warn' : ''}">
+      ${backup.never
+        ? '<b>This record has never been backed up.</b>'
+        : `Last saved <b>${fmtDay(backup.at)}</b>${backup.days === 0 ? ' (today)' : `, ${backup.days} day${backup.days === 1 ? '' : 's'} ago`}${
+            backup.sessions ? ` — ${backup.sessions} session${backup.sessions === 1 ? '' : 's'} since` : ''}.`}
+      Everything the app knows lives in this browser, on this device. There is no
+      server behind it, so a cleared browser does not set the measurement back —
+      it ends it.
+    </p>
+    ${persisted() === false ? `
+      <p class="msg plainmsg fineprint">
+        This browser has not granted persistent storage, which is normal in
+        Safari. Safari drops script-writable data after about seven days without
+        a visit, so on the iPad the saved copy is the only real backstop.
+      </p>` : ''}
+    <div class="homegrid">
+      <button class="btn ${backup.stale ? 'primary ' : ''}big" data-act="backup">
+        Save a copy now
+      </button>
+    </div>
+
     <div class="section-title">run something</div>
     <div class="homegrid">
       ${form ? `
@@ -125,6 +148,7 @@ export function renderTeacher(app, opts) {
 
   app.querySelector('[data-act="back"]').onclick = onBack;
   app.querySelector('[data-act="past"]').onclick = () => renderPastForm(app, opts);
+  app.querySelector('[data-act="backup"]').onclick = opts.onBackup;
   const pr = app.querySelector('[data-act="past-run"]');
   if (pr) pr.onclick = () => renderPastRun(app, opts);
   const pl = app.querySelector('[data-act="past-load"]');
@@ -411,6 +435,7 @@ guide | /g/ to /r/ | ride</pre>
 // ------------------------------------------- administering a loaded PAST form
 export function renderPastRun(app, opts) {
   const form = currentForm();
+  const backup = backupStatus();
   if (!form) return renderLoadForm(app, opts);
   const seq = itemSequence(form);
   const results = [];

@@ -52,25 +52,52 @@ function migrate(oldState) {
  */
 export async function requestPersistence() {
   try {
-    if (!navigator.storage?.persist) return null;
-    if (await navigator.storage.persisted?.()) return true;
-    return await navigator.storage.persist();
-  } catch { return null; }
-}
-
-/** Sessions since the last export. Drives the periodic backup nudge. */
-export function sessionsSinceBackup() {
-  const p = load();
-  if (!p) return 0;
-  return p.sessions.length - (p.lastBackupAt || 0);
+    if (!navigator.storage?.persist) return (persistedState = null);
+    if (await navigator.storage.persisted?.()) return (persistedState = true);
+    return (persistedState = await navigator.storage.persist());
+  } catch { return (persistedState = null); }
 }
 
 export function markBackedUp() {
   const p = load();
   if (!p) return;
   p.lastBackupAt = p.sessions.length;
+  p.lastBackupTime = Date.now();
   flush();
 }
+
+/**
+ * How exposed the record currently is.
+ *
+ * Counting only SESSIONS was not enough. A profile can sit untouched for two
+ * months, four sessions old, and never once ask to be backed up — and two
+ * months is exactly the window in which Safari drops script-writable storage.
+ * So staleness is whichever comes first, sessions or days.
+ *
+ * This matters more than anything else the app records: the entire point is a
+ * longitudinal measurement, and a cleared browser does not degrade it, it ends
+ * it. There is no server to fall back on, by design.
+ */
+export function backupStatus() {
+  const p = load();
+  if (!p) return { never: true, sessions: 0, days: null, stale: false };
+  const sessions = p.sessions.length - (p.lastBackupAt || 0);
+  const never = !p.lastBackupTime && !p.lastBackupAt;
+  const days = p.lastBackupTime
+    ? Math.floor((Date.now() - p.lastBackupTime) / 86400000) : null;
+  return {
+    never,
+    sessions,
+    days,
+    at: p.lastBackupTime || null,
+    stale: never ? sessions >= 3 : (sessions >= 5 || (days !== null && days >= 14)),
+  };
+}
+
+// Whether the browser agreed to keep the data. Safari ignores the request, so
+// a false here is normal there and is exactly why the export nudge exists.
+let persistedState = null;
+export function persisted() { return persistedState; }
 
 export function loadRoot() {
   if (root) return root;

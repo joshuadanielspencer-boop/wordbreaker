@@ -1,7 +1,7 @@
 import {
   load, loadRoot, save, flush, today, profiles, createProfile, switchProfile,
   signOut, deleteProfile, renameProfile, exportProfile, importProfile,
-  resetProfile, requestPersistence, sessionsSinceBackup, markBackedUp, AVATARS,
+  resetProfile, requestPersistence, backupStatus, markBackedUp, AVATARS,
 } from './core/store.js';
 import { initSpeech } from './core/speech.js';
 import { planSession, recoveryItem, itemsForMorpheme, encoreItems } from './core/scheduler.js';
@@ -187,6 +187,7 @@ function home() {
   // against the rule that the app never shows him a score he did not earn in
   // the session. They now live inside the screens they describe.
   const testReady = allMissions().some(m => missionTestReady(m.mission.id));
+  const backupState = backupStatus();
 
   const greeting = S.sessions.length === 0
     ? 'Words are built out of parts. We are going to take them apart.'
@@ -222,8 +223,10 @@ function home() {
       <button class="btn ghost" data-act="personality">Computer: ${S.settings.personality}</button>
       <button class="btn ghost" data-act="parent">Teacher</button>
     </div>
-    ${sessionsSinceBackup() >= 10 ? `
-      <p class="msg plainmsg backup-nudge">${S.sessions.length} sessions and no backup.
+    ${backupState.stale ? `
+      <p class="msg plainmsg backup-nudge">${backupState.never
+        ? 'This record has never been backed up.'
+        : `Last backup ${backupState.days === 0 ? 'today' : `${backupState.days} days ago`}.`}
       Browsers do throw this kind of data away.
       <button class="btn ghost" data-act="backup">Save a copy</button></p>` : ''}`;
 
@@ -760,6 +763,7 @@ function teacherView() {
     onRunProbe: runProbe,
     onSavePast: (levels, note) => { recordPast(levels, note); teacherView(); },
     onMath: runMath,
+    onBackup: () => download(exportProfile(), S.name).then(teacherView),
     onRadar: () => renderRadar(app, {
       onBack: teacherView,
       onPractice: words => runSession({

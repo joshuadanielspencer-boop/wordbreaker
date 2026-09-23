@@ -62,4 +62,13 @@ if (dead.length) {
   console.log('voice: every bank is reachable.');
 }
 
+// 5. The logic that decides what counts as evidence. Content checks cannot
+//    see a regression in what "mastered", "retired" or "finished" mean.
+try {
+  console.log(execFileSync('node',
+    [resolve(import.meta.dirname, 'test.mjs')], { encoding: 'utf8' }).trim());
+} catch (e) {
+  console.log((e.stdout || '').trim()); failed = true;
+}
+
 process.exit(failed ? 1 : 0);

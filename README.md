@@ -33,8 +33,19 @@ embedded viewer. The registry output has no dynamic script URLs at all.
 Saving a profile export adapts to where it is running: a plain `<a download>`
 locally or on an ordinary host, and the host's own save channel where one
 exists, because embedded viewers block download links silently.
-Progress is stored per-device; **Progress → Export** writes a JSON save you can
-drop in Dropbox and import on the other device from the player screen.
+Progress is stored per-device; **Teacher → Save a copy now** writes a JSON save
+you can drop in Dropbox and import on the other device from the player screen.
+
+**This is the most fragile thing in the project.** There is no server, so the
+whole record — every probe, every PAST level, the entire longitudinal
+measurement — is one browser's local storage on one device. A cleared browser
+does not set the study back, it ends it. Safari drops script-writable data
+after about seven days without a visit and ignores the persistence request
+outright, so on the iPad the exported copy is the only real backstop. The
+Teacher screen shows when the last copy was saved and says so loudly once it
+is stale — five sessions or a fortnight, whichever comes first, because
+counting sessions alone would never notice a profile that simply sat untouched
+for two months.
 
 ## Players
 
@@ -50,11 +61,41 @@ else's along.
 node tools/check.mjs
 ```
 
+This runs the content checks, the voice invariants, and `tools/test.mjs`.
+
 Validates that all 342 hand-authored decompositions concatenate back to their
 headword, that every headword is a real English word (checked against
 `/usr/share/dict/words`), that every morpheme id resolves, that every Word
 Detective note attaches to a real headword, and that the voice invariants below
 still hold. Run it after any edit to `js/content/`.
+
+### The tests, and what they are for
+
+`tools/test.mjs` — no framework, no dependencies, run by `check.mjs` and
+therefore by the deploy gate.
+
+The content checks validate the *content*. Nothing validated the code that
+reads it and decides things: what counts as mastered, what gets retired, what a
+probe may serve, when a word is finished, when a backup is overdue. Those
+decisions **are** the study, and a regression in them produces no error, no
+visible symptom and no wrong pixel — it quietly writes the wrong thing into a
+record meant to answer a question about a child eight weeks later.
+
+So the tests assert the pedagogy rather than the plumbing, and each one is
+named as the rule it protects:
+
+- accurate but still slow does **not** retire a word
+- cramming cannot reach BORING, however many right answers it contains
+- two clean days by sound alone does not finish a word — both routes or neither
+- meaning-mode recall is never scheduled before the definition was taught
+- the two probe pools are disjoint, fixed in composition, and never reused
+- practice never touches a held-out measurement item
+- a silent `e` after a vowel team lengthens nothing, and `s` is not `/z/`
+  before a consonant
+
+They were checked by breaking the code on purpose: reverting the both-routes
+rule and the speed gate makes exactly two tests fail, by name. A suite that
+cannot fail is decoration.
 
 ## What it is trying to do
 

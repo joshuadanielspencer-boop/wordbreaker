@@ -109,6 +109,20 @@ invalidated — that is the point of it. Answers are matched on a word's PRIMARY
 pronunciation only; matching any possible reading produced items like "ship
 with /sh/ changed to /k/ = chip", which is false.
 
+**`node tools/check.mjs` now runs `tools/test.mjs` too**, and the deploy gates
+on it. The tests assert pedagogy, not plumbing — "accurate but still slow does
+not retire", "cramming cannot reach BORING", "both routes or neither". If one
+fails, you have changed what the app believes, so read the test name before
+changing the test. They are deliberately breakable: reverting a rule makes the
+matching test fail by name.
+
+**The record is one browser's local storage and nothing else.** No server, no
+sync. Safari drops script-writable data after about a week unvisited and
+ignores the persistence request, so the exported copy is the only backstop on
+the iPad. `backupStatus()` goes stale on sessions OR days, because counting
+sessions alone never notices a profile that sat untouched for two months.
+Anything that makes backing up harder or quieter is a regression.
+
 **An adaptive ladder cannot be an outcome measure.** `currentPattern()` holds
 accuracy in a band by design. Growth shows there as the rung reached, never as
 the score. If someone asks for "the accuracy trend from his dictation
