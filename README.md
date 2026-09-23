@@ -119,6 +119,9 @@ js/core/probe.js      held-out measurement items; practice may never touch these
 js/core/past.js       PAST administrations, recorded by an adult
 js/activities/ladder.js  nonsense words read aloud, scored 1/2/3 by an adult
 js/ui/teacher.js      the teacher area and the evidence view
+js/content/manipulation.js  GENERATED — phoneme manipulation items
+js/core/manipdrills.js      which Sound Swap item comes next
+js/activities/manipulate.js the Sound Swap drill
 tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs,
                       gen-pseudo.mjs, gen-notes.mjs
 ```
@@ -234,6 +237,54 @@ had changed. Three gates, all of which must pass:
 Being accurate but still slow does not retire a word. That is the entire point.
 The timer is never shown; the only visible goal is that words become dull and
 go away.
+
+### Sound Swap — the only drill with no print in it
+
+Kilpatrick's One Minute Activities, in the form that survives having no adult
+in the room. The voice says a word, the screen says which sound to drop or
+swap, and he types what is left. `cat` without /k/ is `at`; `cat` with the /a/
+changed to /i/ is `kit`.
+
+**The word is never shown, and that is the whole design.** Shown, the task
+collapses: "feet without /f/" becomes crossing out a letter you can see, which
+is a cheaper path than the intended one, and cheaper paths get found within
+minutes. Unseen, the word has to be held in his head and taken apart there,
+which is the skill this strand exists to build — it is the one thing in the
+daily mix that works on sounds with no print in front of him.
+
+It is scored **phonetically**, like nonsense dictation: `eet` for `eat` counts,
+because the manipulation was right and the spelling is defensible. Marking only
+the dictionary spelling would turn a phonology item into a spelling item and
+fail him for the wrong thing.
+
+**It is training and never evidence.** Typing takes seconds, so the time
+recorded here is his hands, not his phonology, and must never be compared with
+the PAST's two-second spoken window. It also adds a spelling step, so a child
+who can manipulate a sound but not spell the result loses the item — phonetic
+scoring softens that and does not remove it. And it is phoneme manipulation
+*through print*, which is a hybrid of a deliberately oral task. The real PAST,
+administered by an adult, stays the measure of the underlying skill.
+
+Items are **arithmetic over pronunciations, never guessed**
+(`tools/gen-manipulation.mjs`). An item exists only when the phoneme sequence
+of the prompt word, minus or with one phoneme swapped, is exactly the sequence
+of another word on a curated list — so both ends are known-real and
+known-regular, which keeps `phonics.js` inside the range where it is right. Two
+classes of wrong item came out of indexing answers by every possible reading:
+`chip` can be read /kip/, and `be` can be read with a short e, so "change the
+/sh/ in ship to /k/" and "bed without the /d/" both produced answers that do
+not say what the word says. Answers are now matched on their primary reading
+only, and `tools/check.mjs` re-derives all 1,109 items on every build.
+
+The ladder is Kilpatrick's order — whole syllables, then first sounds, last
+sounds, first-sound swaps, vowel swaps — and adaptive, so like the nonsense
+drills, **growth shows here as the rung reached, never as the score.**
+
+Regenerate with:
+
+```bash
+node tools/gen-manipulation.mjs
+```
 
 ### Show the Middle — the maths strand
 

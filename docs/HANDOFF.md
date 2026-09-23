@@ -96,6 +96,19 @@ refuse to characterise him at all — one wrong answer is not a pattern, and a
 screen that says it is invites exactly the over-reading of thin data this
 project exists to avoid.
 
+**Never show the word in Sound Swap.** The whole task is holding a word in
+your head and taking it apart there. Put it on screen and "feet without /f/"
+becomes deleting a letter you can see — a cheaper path, and cheaper paths get
+found. The same reasoning is why the drill is typed rather than tapped from
+options.
+
+**Sound Swap items are generated, not hand-written**, and `tools/check.mjs`
+re-derives every one of them from `phonics.js` on each build. If you change
+the phonics model, expect that check to tell you which items it just
+invalidated — that is the point of it. Answers are matched on a word's PRIMARY
+pronunciation only; matching any possible reading produced items like "ship
+with /sh/ changed to /k/ = chip", which is false.
+
 **An adaptive ladder cannot be an outcome measure.** `currentPattern()` holds
 accuracy in a band by design. Growth shows there as the rung reached, never as
 the score. If someone asks for "the accuracy trend from his dictation
@@ -104,17 +117,20 @@ practice", that number does not mean what it looks like.
 ## The shape of the thing
 
 ```
-Solo, daily        Start (mixed session, ~17 items, a third of it Kilpatrick),
-                   Spelling Slaughter, Show the Middle, Hard Word Radar,
-                   Codex, The Expedition
+Solo, daily        Start (mixed session, ~19 items, half of it Kilpatrick),
+                   Spelling Slaughter, Your collection (Codex, Expedition,
+                   Make it Boring). Show the Middle and Hard Word Radar start
+                   from Teacher — neither is offered to the learner.
 Built, Phase 1     Impostor Row, Ransom Note, Spell It Out
 Built, Phase 2     Nonsense Dictation, Sound Hunt
 Built, Phase 3     Teacher area — PAST administration (form loaded by the
                    adult) plus a paper recorder, Nonsense Ladder, both probes,
                    evidence view, spelling report, review-the-misses drill,
                    whole-list spelling test
-Not built          One Minute Activities (no item bank), Reading Aloud miscue
-                   log, Phase 4 word-study enrichment
+Built, solo        Sound Swap — phoneme manipulation, typed, two a session
+Not built          One Minute Activities as Kilpatrick runs them (oral, adult,
+                   two-second window), Reading Aloud miscue log, Phase 4
+                   word-study enrichment
 ```
 
 **Gate 0 is the blocker, and it is not a coding task.** All three baselines can

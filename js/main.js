@@ -22,6 +22,7 @@ import { mount as spellout } from './activities/spellout.js';
 import { mount as dictation } from './activities/dictation.js';
 import { mount as soundhunt } from './activities/soundhunt.js';
 import { mount as ladder } from './activities/ladder.js';
+import { mount as manipulate } from './activities/manipulate.js';
 import { makeProblem, pickSkill } from './content/math.js';
 import { renderCodex } from './ui/codex.js';
 import { renderRadar } from './ui/radar.js';
@@ -36,7 +37,7 @@ import { drillQueue, reviewQueue, spellingTestQueue, missionTestReady, allMissio
 import { missionById } from './content/lexicon.js';
 import { boringItems, fluencySummary, typicalMs } from './core/fluency.js';
 
-const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell, recall, impostor, ransom, spellout, dictation, soundhunt, ladder };
+const ACTIVITIES = { autopsy, equation, detective, invent, middle, spell, recall, impostor, ransom, spellout, dictation, soundhunt, ladder, manipulate };
 const PERSONALITIES = ['normal', 'funny', 'ridiculous', 'unsupervised'];
 const app = document.getElementById('app');
 
@@ -402,7 +403,7 @@ async function runSession(customPlan) {
     // Several activities need the whole step, not just a word: Impostor Row
     // needs the SET, Ransom Note the distortion, and the nonsense drills the
     // pattern or grapheme family.
-    const WHOLE_STEP = ['impostor', 'ransom', 'dictation', 'soundhunt'];
+    const WHOLE_STEP = ['impostor', 'ransom', 'dictation', 'soundhunt', 'manipulate'];
     const subject = WHOLE_STEP.includes(step.activity) ? step : step.word;
     const res = await ACTIVITIES[step.activity](
       document.getElementById('stage'), subject,

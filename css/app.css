@@ -804,3 +804,11 @@ body {
 .mission-block .mission-card { width: 100%; }
 .mission-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .mission-actions .btn { flex: 1; min-width: 110px; }
+
+/* ---------- sound swap ---------- */
+.manip-card { text-align: center; }
+.manip-instruction {
+  font-size: 19px; margin: 14px 0 0; line-height: 1.5;
+  padding-top: 12px; border-top: 1px dashed var(--line);
+}
+.manip-instruction b { font-family: var(--mono); font-size: 20px; }

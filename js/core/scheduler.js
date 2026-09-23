@@ -10,6 +10,7 @@ import { level, LEVEL, entry } from './mastery.js';
 import { impostorItems } from './lookalike.js';
 import { antiCompensationExtra } from './drills.js';
 import { dictationItems, soundHuntItems } from './nonsensedrills.js';
+import { manipulationItems } from './manipdrills.js';
 import { itemHistory } from './log.js';
 
 const MIX = { weak: 0.55, review: 0.25, fresh: 0.20 };
@@ -162,6 +163,16 @@ export function planSession({ items = 14, maxLevel = 5 } = {}) {
   const nonsense = [...dictationItems(2), ...soundHuntItems(1)];
   nonsense.forEach((it, k) => {
     const at = Math.min(seq.length, 4 + k * 4);
+    seq.splice(at, 0, it);
+  });
+
+  // Phoneme manipulation, two a session. This is the one thing in the daily
+  // mix that works on sounds with no print in front of him, which is the gap
+  // the whole Kilpatrick strand exists to close. Practice only — see
+  // manipdrills.js for why it can never be read as a measurement.
+  const swaps = manipulationItems(2);
+  swaps.forEach((it, k) => {
+    const at = Math.min(seq.length, 6 + k * 5);
     seq.splice(at, 0, it);
   });
 
