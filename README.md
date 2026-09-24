@@ -472,7 +472,7 @@ word, and that any `display` capitalisation matches the spelling.
 
 ### The Expedition — the narrative hook
 
-Ten chapters, one per completed session, each locked behind a long word.
+Twenty chapters, one per completed session, each locked behind a long word.
 Breaking the word is how the chapter opens, so the story and the mechanic are
 the same action rather than a reward bolted onto one another. Opening is not
 conditional on getting the word right first time — the chapter is the reward
@@ -480,6 +480,18 @@ for the attempt, not a prize for accuracy.
 
 Gate words are validated by `tools/check.mjs`: each must exist in the corpus,
 have at least three pieces, and be unique across chapters.
+
+Chapters 1-10 are the first expedition, which is about taking a word apart.
+Chapters 11-20 are the second, which is about where the pieces come from —
+the Latin and Greek quarries, what English has borrowed and never given back,
+words that do not come apart at all, and the ones nobody uses any more. That
+is the other half of what the Codex teaches, and the last chapter lands on why
+it matters: knowing the pieces is what lets him read a word he has never seen,
+which is exactly what the transfer test asks of him.
+
+A paragraph whose lines are all indented is treated as **signage** — a notice,
+a sign on a desk — and keeps its line breaks. Ordinary prose is hard-wrapped
+in the source, so its breaks are joined back up.
 
 ### The home screen
 
@@ -632,7 +644,9 @@ must never reach the deployed site.
 - **The serialized story** — the actual retention mechanic.
 - **More maths types** — order of operations and distributive shortcuts
   (99 × 7 as 100 × 7 − 7). Only partial products are built.
-- **More chapters** — ten is about ten sessions of runway.
+- **More chapters** — twenty is about twenty sessions of runway. The second
+  arc ends the way the first one did, with another notice going up, so a third
+  is set up but not written.
 - **More Detective notes.** 272 of 519 words now have one (212 hand-written,
   60 derived). The remaining gap is mostly `-able`/`-ible` adjectives, which
   need a past participle ("able to be seen") that cannot be composed

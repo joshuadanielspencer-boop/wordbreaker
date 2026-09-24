@@ -830,3 +830,10 @@ body {
 .ulerr { margin: 0; font-size: 13px; color: var(--gentle); text-align: left; }
 .ulerr:empty { display: none; }
 .btn.tiny.danger { color: var(--gentle); }
+
+/* A sign, a notice, a label on a desk — its shape is the joke, so it keeps
+   its line breaks while ordinary hard-wrapped prose is joined back up. */
+.chapter-body p.sign {
+  font-family: var(--mono); font-size: 14px; line-height: 1.6;
+  color: var(--ink-dim); padding-left: 1.6em; white-space: pre-line;
+}

@@ -39,7 +39,19 @@ export function renderChapter(app, chapter, { onDone }) {
       <p class="chapter-no">Chapter ${chapter.index + 1}</p>
       <h1>${chapter.title}</h1>
       <div class="chapter-body">${chapter.text.split('\n\n')
-        .map(p => `<p>${p.replace(/\n/g, ' ')}</p>`).join('')}</div>
+        .map(block => {
+          // Prose is hard-wrapped in the source, so its line breaks are an
+          // artefact of the file and have to be joined back up. A block whose
+          // lines are ALL indented is signage — a notice, a sign on a desk —
+          // and its shape is the point, so it keeps its breaks. Without this
+          // the Department's sign rendered as one long run-on line, which is
+          // what the CSS `white-space: pre-line` was there to prevent.
+          const lines = block.split('\n');
+          const sign = lines.length > 1 && lines.every(l => /^\s{2,}\S/.test(l));
+          return sign
+            ? `<p class="sign">${lines.map(l => l.replace(/^\s+/, '')).join('\n')}</p>`
+            : `<p>${block.replace(/\n/g, ' ')}</p>`;
+        }).join('')}</div>
     </article>
     <div class="homegrid" style="margin-top:24px">
       <button class="btn primary big" data-act="done">Close the book</button>
