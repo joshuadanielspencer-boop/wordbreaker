@@ -22,6 +22,7 @@ import {
 import { PAST_LEVELS, pastHistory, lastPast, summarise, hasBaseline } from '../core/past.js';
 import { parseForm, promptFor, saveForm, currentForm, clearForm, itemSequence, toLevels } from '../core/pastform.js';
 import { allMissions, wordStatus } from '../core/mission.js';
+import { parseWordList, proposeSpec, validateEntry, saveList, deleteList, userLists, needingDefinitions } from '../core/userlists.js';
 import { MORPH, drillableMorphemes, originLabel } from '../content/lexicon.js';
 import { voiceQuality } from '../core/speech.js';
 import { level, LEVEL_NAME, weakest, entry as mastEntry } from '../core/mastery.js';
@@ -135,6 +136,7 @@ export function renderTeacher(app, opts) {
     <div class="homegrid">
       <button class="btn big" data-act="evidence">Evidence — does word-level skill move?</button>
       <button class="btn big" data-act="spelling">Spelling report</button>
+      <button class="btn big" data-act="lists">Spelling lists &nbsp;·&nbsp; add this week's</button>
       <button class="btn big" data-act="progress">What keeps going wrong</button>
       <button class="btn big" data-act="radar">Hard Word Radar &nbsp;·&nbsp; scan a real page</button>
       <button class="btn big" data-act="math">Show the Middle &nbsp;·&nbsp; the maths strand</button>
@@ -157,6 +159,7 @@ export function renderTeacher(app, opts) {
   app.querySelector('[data-act="probe-spelling"]').onclick = () => opts.onRunProbe(SPELLING);
   app.querySelector('[data-act="evidence"]').onclick = () => renderEvidence(app, opts);
   app.querySelector('[data-act="spelling"]').onclick = () => renderSpellingReport(app, opts);
+  app.querySelector('[data-act="lists"]').onclick = () => renderLists(app, opts);
   app.querySelector('[data-act="progress"]').onclick = () => renderProgress(app, opts);
   // Radar moved here off the child's home screen: pasting in a page of what he
   // is reading is something an adult does, not a thing he picks on a Tuesday.
@@ -284,6 +287,164 @@ export function renderEvidence(app, opts) {
     </p>`;
 
   app.querySelector('[data-act="back"]').onclick = () => renderTeacher(app, opts);
+}
+
+// ------------------------------------------------------- typing in a list
+//
+// School produces a spelling list most weeks. Before this, each one meant
+// editing the repo by hand, which meant it did not happen unless someone else
+// did it. These are stored in the profile and travel with a profile export.
+//
+// The app PROPOSES how each word comes apart and the adult corrects it. It
+// never insists: the matcher is conservative by design and says "whole" far
+// more often than it guesses, because a wrong seam teaches something untrue.
+// A word stored whole is simply never sent to the autopsy.
+
+const CHIP = parts => parts.map(p => {
+  const m = MORPH[p.m];
+  return `<span class="part ${m ? m.type : 'root'}">
+            <span class="part-text">${esc(p.surface)}</span>
+            <span class="part-gloss">${m ? esc(m.gloss) : '?'}</span>
+          </span>`;
+}).join('<span class="joiner">+</span>');
+
+export function renderLists(app, opts) {
+  window.scrollTo(0, 0);
+  const lists = userLists();
+
+  app.innerHTML = `
+    ${topbar('spelling lists')}
+    <div class="hero teacher-hero">
+      <h1 style="font-size:28px">Spelling lists</h1>
+      <p>Type in this week's list. The app works out the pieces; you correct it.</p>
+    </div>
+
+    ${lists.length ? `
+      <div class="section-title">lists you have added</div>
+      ${lists.map(m => {
+        const missing = needingDefinitions(m.id);
+        const total = m.groups.flatMap(g => g.words).length;
+        return `
+          <div class="gate-row">
+            <span class="gate-name">
+              <b>${esc(m.name)}</b>
+              <span>${total} word${total === 1 ? '' : 's'}${
+                missing.length ? ` · ${missing.length} still need a definition` : ''}</span>
+            </span>
+            <button class="btn ghost tiny danger" data-del="${m.id}">Remove</button>
+          </div>`;
+      }).join('')}` : ''}
+
+    <div class="section-title">add a list</div>
+    <input class="answer" id="listname" maxlength="40" autocomplete="off"
+           placeholder="e.g. Spelling List 3" value="Spelling List ${lists.length + 3}">
+    <p class="msg plainmsg fineprint">
+      One word per line. If the sheet already gives meanings you can paste them
+      too, after an <b>=</b> — <span class="mono">nonflammable = will not catch
+      fire</span>. Numbering is ignored. A word with no meaning can still be
+      practised and tested by sound, but it cannot be finished until it has one,
+      because a word has to survive both routes.
+    </p>
+    <textarea class="answer form-paste" id="listwords" rows="10" spellcheck="false"
+      placeholder="adaptable = able to change to fit&#10;hospitable&#10;abstain"></textarea>
+
+    <div class="homegrid" style="margin-top:14px">
+      <button class="btn primary big" data-act="work">Work out the pieces</button>
+    </div>
+    <div id="review"></div>`;
+
+  app.querySelector('[data-act="back"]').onclick = () => renderTeacher(app, opts);
+  app.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    const m = lists.find(x => x.id === b.dataset.del);
+    if (confirm(`Remove "${m.name}"? Progress already recorded against these words is kept.`)) {
+      deleteList(b.dataset.del);
+      renderLists(app, opts);
+    }
+  });
+  app.querySelector('[data-act="work"]').onclick = () => {
+    const entries = parseWordList(app.querySelector('#listwords').value)
+      .map(e => ({ ...e, spec: proposeSpec(e.word).spec, source: proposeSpec(e.word).source }));
+    if (!entries.length) {
+      app.querySelector('#review').innerHTML =
+        `<p class="msg gentle">No words found — one per line.</p>`;
+      return;
+    }
+    renderReview(app, opts, app.querySelector('#listname').value, entries);
+  };
+}
+
+const SOURCE_NOTE = {
+  known:   'already on a list',
+  corpus:  'from the corpus',
+  matched: 'worked out',
+  whole:   'kept whole — no seams the app knows',
+};
+
+function renderReview(app, opts, name, entries) {
+  const box = app.querySelector('#review');
+  box.innerHTML = `
+    <div class="section-title">check the pieces</div>
+    <p class="msg plainmsg fineprint">
+      Edit any split by typing it with <b>|</b> between the pieces, like
+      <span class="mono">un|trust|worth|y</span>. A piece can name its morpheme
+      after a colon when the spelling changes — <span class="mono">ation:tion</span>.
+      Leave a word whole if it does not come apart; he will simply not be asked
+      to cut it.
+    </p>
+    <div class="ullist">
+      ${entries.map((e, i) => `
+        <div class="ulrow" data-i="${i}">
+          <div class="ulhead">
+            <b>${esc(e.display || e.typed)}</b>
+            <span class="ulsrc">${SOURCE_NOTE[e.source] || ''}</span>
+          </div>
+          <input class="answer ulspec mono" value="${esc(e.spec)}" spellcheck="false" aria-label="pieces">
+          <div class="ulchips"></div>
+          <input class="answer uldef" value="${esc(e.def || '')}" aria-label="what it means"
+                 placeholder="what it means — needed before it can be finished">
+          <p class="ulerr"></p>
+        </div>`).join('')}
+    </div>
+    <div class="feedback" aria-live="polite"></div>
+    <div class="homegrid" style="margin-top:14px">
+      <button class="btn primary big" data-act="save">Save this list</button>
+    </div>`;
+
+  const rows = [...box.querySelectorAll('.ulrow')];
+  const refresh = row => {
+    const i = Number(row.dataset.i);
+    const e = entries[i];
+    e.spec = row.querySelector('.ulspec').value;
+    e.def = row.querySelector('.uldef').value;
+    const v = validateEntry(e);
+    row.querySelector('.ulchips').innerHTML = v.parts.length ? CHIP(v.parts) : '';
+    row.querySelector('.ulerr').textContent = v.errors.join(' · ');
+    row.classList.toggle('bad', !v.ok);
+    return v.ok;
+  };
+  rows.forEach(row => {
+    refresh(row);
+    row.querySelector('.ulspec').addEventListener('input', () => refresh(row));
+    row.querySelector('.uldef').addEventListener('input', () => refresh(row));
+  });
+
+  box.querySelector('[data-act="save"]').onclick = () => {
+    rows.forEach(refresh);
+    const res = saveList(app.querySelector('#listname').value || name, entries);
+    const fb = box.querySelector('.feedback');
+    if (!res.ok) {
+      fb.innerHTML = `<p class="msg gentle">Nothing saved — ${res.errors.length === 1
+        ? '1 word needs' : `${res.errors.length} words need`} a look:</p>
+        <ul class="errlist">${res.errors.slice(0, 10).map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+      return;
+    }
+    const missing = entries.filter(e => !e.def?.trim()).length;
+    fb.innerHTML = `<p class="msg good">Saved.${missing
+      ? ` ${missing === 1 ? '1 word still needs a meaning before it can be'
+                          : `${missing} words still need a meaning before they can be`} finished.`
+      : ''}</p>`;
+    setTimeout(() => renderLists(app, opts), 900);
+  };
 }
 
 // ------------------------------------------------------------ spelling report

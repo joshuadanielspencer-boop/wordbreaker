@@ -5,7 +5,7 @@
 // confound the measurement, and a low score would no longer tell you anything
 // about the habit.
 
-import { WORD_LIST, BY_TEXT, MISSION_WORDS } from '../content/lexicon.js';
+import { WORD_LIST, BY_TEXT, missionWord } from '../content/lexicon.js';
 import { load } from './store.js';
 import { speechAvailable } from './speech.js';
 import { DISTORTION_KEYS } from '../activities/ransom.js';
@@ -16,7 +16,7 @@ function metWords() {
   const seen = new Map();
   for (const r of (S?.log || [])) {
     const text = String(r.item).replace(/^[a-z]:/, '');
-    const w = BY_TEXT[text] || MISSION_WORDS[text];
+    const w = BY_TEXT[text] || missionWord(text);
     if (w) seen.set(text, w);
   }
   if (seen.size >= 8) return [...seen.values()];

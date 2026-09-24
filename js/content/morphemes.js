@@ -229,6 +229,13 @@ export const MORPHEMES = {
   worth:   { type:'root', gloss:'worth, value',        origin:'old english', forms:['worth'] },
   present: { type:'root', gloss:'here, at hand',       origin:'latin',       forms:['present'] },
 
+  // For a curriculum word that does not break into pieces this app knows.
+  // A word typed in from a school list has no hand-authored decomposition, and
+  // inventing a seam would teach something untrue — so it stays whole, and
+  // says so, rather than being cut somewhere plausible.
+  whole:   { type:'root', gloss:'the whole word',      origin:'unknown', forms:['whole'],
+             lit:'Not every word comes apart. This one keeps its pieces to itself.' },
+
   // ---------- SUFFIXES ----------
   tion:   { type:'suffix', gloss:'the act or result of',    origin:'latin', forms:['tion','sion','ation','ition'] },
   able:   { type:'suffix', gloss:'able to be',              origin:'latin', forms:['able','ible','ile'] },

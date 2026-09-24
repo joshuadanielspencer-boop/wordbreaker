@@ -9,6 +9,7 @@ import { NOTES } from './notes.js';
 import { DERIVED_LITS } from './notes-derived.js';
 import { PSEUDO_SPECS } from './pseudo.js';
 import { MISSIONS, missionEntries } from './missions.js';
+import { load } from '../core/store.js';
 
 const M = {};
 for (const [id, def] of Object.entries(MORPHEMES)) {
@@ -144,10 +145,19 @@ export const PSEUDO = PSEUDO_SPECS.map(spec => {
 // Curriculum words. Parsed exactly like corpus words so every activity can
 // consume them, but kept out of WORD_LIST so the morphology scheduler is not
 // quietly steered by whatever the school is teaching this week.
-export const MISSION_WORDS = {};
-export const MISSION_LIST = MISSIONS.map(m => {
-  const words = missionEntries(m).map(rec => {
+function buildMission(m) {
+  const words = [];
+  for (const rec of missionEntries(m)) {
     const w = parseSpec(rec.spec);
+    // Lists typed in by an adult arrive here as data, so a bad spec is a
+    // possibility the app has to survive rather than a build error. Drop the
+    // word instead of letting an unknown morpheme id crash an activity
+    // mid-session; the loader validates before saving, so this is the backstop
+    // for an edited or imported file.
+    if (!w.parts.every(p => M[p.m])) {
+      console.warn(`mission ${m.id}: dropping "${w.text}" — unknown morpheme`);
+      continue;
+    }
     w.id = 'm:' + w.text;
     w.level = w.parts.length;
     w.morphemes = w.parts.map(p => p.m);
@@ -157,10 +167,35 @@ export const MISSION_LIST = MISSIONS.map(m => {
     w.group = rec.group;
     w.groupLabel = rec.groupLabel;
     if (rec.note) w.note = { lit: rec.note, curriculum: true };
-    MISSION_WORDS[w.text] = w;
-    return w;
-  });
+    words.push(w);
+  }
   return { ...m, words };
-});
+}
 
-export function missionById(id) { return MISSION_LIST.find(m => m.id === id); }
+const BUILTIN_MISSIONS = MISSIONS.map(buildMission);
+
+// Curriculum lists are no longer only the ones compiled in: an adult can type
+// this week's list into the app, and those live in the profile. So the list is
+// recomputed per profile rather than built once at import, and cached against
+// a key that changes when the profile or its lists change.
+let missionCache = { key: null, list: null, byText: null };
+
+export function missionList() {
+  const S = load();
+  const user = S?.missions || [];
+  const key = `${S?.id || '-'}|${user.length}|${S?.missionsRev || 0}`;
+  if (missionCache.key === key) return missionCache.list;
+  const list = [...BUILTIN_MISSIONS, ...user.map(buildMission)];
+  const byText = {};
+  for (const m of list) for (const w of m.words) byText[w.text] = w;
+  missionCache = { key, list, byText };
+  return list;
+}
+
+export function missionById(id) { return missionList().find(m => m.id === id); }
+
+/** One curriculum word by its spelling, across every list. */
+export function missionWord(text) {
+  missionList();
+  return missionCache.byText[text] || null;
+}

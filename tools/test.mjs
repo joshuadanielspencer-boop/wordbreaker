@@ -161,8 +161,8 @@ const DAY = 86400000;
 {
   describe('mission');
   const mission = await import('../js/core/mission.js');
-  const { MISSION_LIST } = await import('../js/content/lexicon.js');
-  const m = MISSION_LIST[0];
+  const { missionList } = await import('../js/content/lexicon.js');
+  const m = missionList()[0];
   const w = m.words[0];
   const clean = (dayBack, mode) => ({
     activity: 'recall', item: 'm:' + w.text, correct: true, ms: 3000,
@@ -269,6 +269,72 @@ const DAY = 86400000;
   // The case counting sessions alone could never catch.
   p.lastBackupTime = Date.now() - 20 * DAY;
   ok(store.backupStatus().stale, 'twenty days without a backup is stale even with no new sessions');
+}
+
+// -------------------------------------------------------- typed-in lists
+{
+  describe('spelling lists typed in by an adult');
+  const ul = await import('../js/core/userlists.js');
+  const lex = await import('../js/content/lexicon.js');
+  const mission = await import('../js/core/mission.js');
+
+  profile();
+
+  eq(ul.proposeSpec('transportation').spec, 'trans|port|ation:tion',
+    'a word the corpus already knows keeps its exact decomposition');
+  eq(ul.proposeSpec('yacht').spec, 'yacht:whole',
+    'a word with no seams the app knows is kept whole, not cut somewhere plausible');
+
+  ok(!ul.validateEntry({ word: 'adaptable', spec: 'ad|apt|abel' }).ok,
+    'pieces that do not spell the word are refused');
+  ok(!ul.validateEntry({ word: 'zzz', spec: 'zzz:nosuch' }).ok,
+    'an unknown morpheme id is refused');
+  ok(!ul.validateEntry({ word: 'cat', spec: 'cat:whole', def: 'a cat is small' }).ok,
+    'a definition containing its own word is refused — it would give the answer away');
+  ok(ul.validateEntry({ word: 'yacht', spec: 'yacht:whole', def: 'a sailing boat' }).ok,
+    'a whole word with a clean definition is accepted');
+
+  const before = lex.missionList().length;
+  const bad = ul.saveList('Bad list', [
+    { typed: 'yacht', word: 'yacht', spec: 'yacht:whole', def: 'a sailing boat' },
+    { typed: 'adaptable', word: 'adaptable', spec: 'ad|apt|abel' },
+  ]);
+  ok(!bad.ok, 'a list with one bad word is refused');
+  eq(lex.missionList().length, before, 'and nothing is stored — half a list is worse than none');
+
+  const good = ul.saveList('Spelling List 9', [
+    { typed: 'yacht', word: 'yacht', spec: 'yacht:whole', def: 'a sailing boat' },
+    { typed: 'adaptable', word: 'adaptable', spec: 'ad|apt|able', def: 'able to change to fit' },
+    { typed: 'beautiful', word: 'beautiful', spec: 'beautiful:whole' },
+  ]);
+  ok(good.ok, 'a clean list saves');
+  eq(lex.missionList().length, before + 1, 'and becomes a mission like any other');
+
+  const mine = lex.missionList().find(m => m.id === good.id);
+  eq(mine.words.length, 3, 'every word came through');
+  eq(mine.words.find(w => w.text === 'adaptable').def, 'able to change to fit',
+    'definitions typed on the same line are carried');
+  eq(ul.needingDefinitions(good.id).join(','), 'beautiful',
+    'a word with no meaning is reported, not silently finished-proof');
+
+  // A word with no seams must never be sent to the autopsy.
+  const q = mission.drillQueue(good.id, 12);
+  ok(!q.some(x => x.word.text === 'yacht' && x.activity === 'autopsy'),
+    'a whole word is never sent to the autopsy — there is no seam to find');
+  ok(q.some(x => x.word.text === 'adaptable' && x.activity === 'autopsy'),
+    'a word that does come apart still gets one');
+
+  // Corrupt data must not take an activity down mid-session. The warning it
+  // prints is the point, so it is silenced here rather than left to look like
+  // a failure in the build log.
+  const warn = console.warn; console.warn = () => {};
+  store.load().missions.push({
+    id: 'broken', name: 'Broken', subtitle: '', groups: [{ label: 'x', words: [{ spec: 'zz:nosuch', def: 'x' }] }],
+  });
+  store.load().missionsRev++;
+  const broken = lex.missionList().find(m => m.id === 'broken');
+  eq(broken.words.length, 0, 'a word with an unknown morpheme is dropped rather than crashing an activity');
+  console.warn = warn;
 }
 
 // ------------------------------------------------------------------ report

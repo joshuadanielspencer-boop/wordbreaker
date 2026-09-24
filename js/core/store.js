@@ -24,6 +24,8 @@ function blankProfile(name, avatar) {
     streak: { count: 0, lastDay: null },
     rewards: [],        // reward lines already shown, so they don't repeat
     past: [],           // PAST administrations, entered by an adult
+    missions: [],       // spelling lists typed in by an adult
+    missionsRev: 0,     // bumped on every edit, so derived caches notice
   };
 }
 

@@ -102,7 +102,8 @@ export function renderMission(app, id, { onBack, onDrill, onReview, onTest }) {
           <span class="sw-parts">${w.parts.map(p => p.surface).join('·')}</span>
           <span class="sw-state">${s.slaughtered ? 'slaughtered'
             : s.cleanDays.size ? 'one clean spell' : s.seen ? `seen ${s.seen}×` : 'untouched'}${
-            s.misses ? ` · ${s.misses} miss${s.misses === 1 ? '' : 'es'}` : ''}</span>
+            s.misses ? ` · ${s.misses} miss${s.misses === 1 ? '' : 'es'}` : ''}${
+            w.def ? '' : ' · needs a meaning'}</span>
         </div>`;
       }).join('')}</div>`).join('')}`;
 

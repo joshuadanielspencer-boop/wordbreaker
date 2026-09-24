@@ -123,6 +123,18 @@ the iPad. `backupStatus()` goes stale on sessions OR days, because counting
 sessions alone never notices a profile that sat untouched for two months.
 Anything that makes backing up harder or quieter is a regression.
 
+**Curriculum lists are runtime data now, not just compiled content.**
+`missionList()` recomputes per profile and caches against `missionsRev`; bump
+that on any write or derived caches go stale. Typed-in lists are validated in
+`userlists.js` at save time because `check.mjs` cannot see them, and
+`buildMission` drops a word whose morpheme does not resolve rather than letting
+an imported or edited file crash an activity mid-session.
+
+**A word with no known seams is stored whole (`word:whole`) and never sent to
+the autopsy.** Guessing a seam to give the activity something to do would teach
+something untrue. If you add a way to decompose more words, improve the
+matcher — do not lower this bar.
+
 **An adaptive ladder cannot be an outcome measure.** `currentPattern()` holds
 accuracy in a band by design. Growth shows there as the rung reached, never as
 the score. If someone asks for "the accuracy trend from his dictation

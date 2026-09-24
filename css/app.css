@@ -812,3 +812,21 @@ body {
   padding-top: 12px; border-top: 1px dashed var(--line);
 }
 .manip-instruction b { font-family: var(--mono); font-size: 20px; }
+
+/* ---------- typing in a spelling list ---------- */
+.mono { font-family: var(--mono); font-size: 13px; }
+.ullist { display: flex; flex-direction: column; gap: 10px; }
+.ulrow {
+  border: 1.5px solid var(--line); border-radius: var(--r);
+  background: var(--surface); padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.ulrow.bad { border-color: var(--gentle); }
+.ulhead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.ulhead b { font-size: 18px; }
+.ulsrc { font-size: 12px; color: var(--ink-dim); }
+.ulrow .answer { width: 100%; }
+.ulchips { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-height: 8px; }
+.ulerr { margin: 0; font-size: 13px; color: var(--gentle); text-align: left; }
+.ulerr:empty { display: none; }
+.btn.tiny.danger { color: var(--gentle); }

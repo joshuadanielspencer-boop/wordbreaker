@@ -163,6 +163,7 @@ js/ui/teacher.js      the teacher area and the evidence view
 js/content/manipulation.js  GENERATED — phoneme manipulation items
 js/core/manipdrills.js      which Sound Swap item comes next
 js/activities/manipulate.js the Sound Swap drill
+js/core/userlists.js  spelling lists typed in by an adult
 tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs,
                       gen-pseudo.mjs, gen-notes.mjs
 ```
@@ -437,8 +438,35 @@ sound half is dropped rather than making words unfinishable.
 Every curriculum word requires a `def`; `tools/check.mjs` fails the build
 without one, or if a definition contains the word it is defining.
 
-To add a mission, append to `MISSIONS` in `js/content/missions.js` using the
-same `surface:morphemeId` notation as the corpus. `tools/check.mjs` verifies
+**Most lists are typed in, not coded.** Teacher → **Spelling lists** takes this
+week's list one word per line, proposes how each word comes apart, and lets you
+correct it before saving. Lists live in the profile, travel with a profile
+export, and are parsed exactly like the compiled-in ones — same specs, same
+activities, same mastery store, same Codex.
+
+A definition can ride along on the same line after `=`, because that is how a
+school sheet is usually already written and retyping twenty definitions is the
+part that stops this being used. A word without one can still be practised and
+tested by sound, but it cannot be *finished*, since a word has to survive both
+routes — so the word board marks it "needs a meaning".
+
+The proposal comes from `js/core/analyze.js`, and it is conservative on
+purpose. It reuses the exact decomposition when the word is already on any list,
+falls back to matching a known root, and otherwise keeps the word **whole**
+rather than cutting it somewhere plausible — hand-authored decompositions are
+exact, this is a guess, and a wrong seam teaches something untrue. `mission.js`
+never sends a whole word to the autopsy, so he is not asked to find a seam that
+is not there.
+
+The build-time check cannot see a typed list, so `js/core/userlists.js` applies
+the same rules at the moment of saving: the pieces must concatenate back to the
+word exactly, every morpheme id must resolve, and a definition may not contain
+the word it defines. A list with one bad word is refused whole — half a list
+would be worse than none.
+
+To add a mission in code instead, append to `MISSIONS` in
+`js/content/missions.js` using the same `surface:morphemeId` notation as the
+corpus. `tools/check.mjs` verifies
 every curriculum word decomposes exactly, resolves to real morphemes, is a real
 word, and that any `display` capitalisation matches the spelling.
 

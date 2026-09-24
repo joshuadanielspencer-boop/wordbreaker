@@ -18,7 +18,7 @@
 // unfinishable.
 
 import { load } from './store.js';
-import { MISSION_LIST, missionById } from '../content/lexicon.js';
+import { missionList, missionById } from '../content/lexicon.js';
 import { speechAvailable } from './speech.js';
 
 const CLEAN_NEEDED = 2;
@@ -78,7 +78,7 @@ export function missionProgress(mission) {
 }
 
 export function allMissions() {
-  return MISSION_LIST.map(m => ({ mission: m, ...missionProgress(m) }));
+  return missionList().map(m => ({ mission: m, ...missionProgress(m) }));
 }
 
 /**
@@ -102,8 +102,11 @@ export function drillQueue(missionId, n = 10) {
   for (const { w, s } of ranked) {
     if (queue.length >= n) break;
     if (s.seen === 0) {
-      // Structure before spelling, always.
-      queue.push({ word: w, activity: 'autopsy', phase: 'slaughter' });
+      // Structure before spelling, always — unless there is no structure to
+      // show. A word typed in from a school list may not break into pieces the
+      // app knows, and asking him to cut a word that has no seams teaches a
+      // seam that is not there.
+      if (w.parts.length > 1) queue.push({ word: w, activity: 'autopsy', phase: 'slaughter' });
       if (queue.length < n) queue.push({ word: w, activity: 'spell', phase: 'slaughter' });
     } else if (s.spelled === 0) {
       // Seen the structure but never written it: practise before testing.
