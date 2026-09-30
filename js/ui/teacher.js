@@ -25,6 +25,7 @@ import { allMissions, wordStatus } from '../core/mission.js';
 import { parseWordList, proposeSpec, validateEntry, saveList, deleteList, userLists, needingDefinitions } from '../core/userlists.js';
 import { MORPH, drillableMorphemes, originLabel } from '../content/lexicon.js';
 import { voiceQuality } from '../core/speech.js';
+import { sessionPace } from '../core/fluency.js';
 import { level, LEVEL_NAME, weakest, entry as mastEntry } from '../core/mastery.js';
 import { SKILLS, LADDER } from '../content/math.js';
 
@@ -842,6 +843,7 @@ export function renderProgress(app, opts) {
   const worst = weakest(teach, 12);
   const sessions = S.sessions.slice(-10).reverse();
   const vq = voiceQuality();
+  const pace = sessionPace();
 
   app.innerHTML = `
     ${topbar('progress')}
@@ -879,6 +881,14 @@ export function renderProgress(app, opts) {
     </div>
 
     <div class="section-title">recent sessions</div>
+    ${pace ? `
+      <p class="msg plainmsg ${pace.overBudget ? 'teacher-warn' : ''}">
+        Sessions run about <b>${pace.minutes} minutes</b> for ${pace.items} items —
+        roughly ${pace.secondsPerItem} seconds an item, over the last ${pace.n}.
+        ${pace.overBudget
+          ? 'The home screen promises ten. Worth trimming a block, or expecting him to stop before the end.'
+          : 'The home screen promises ten, so that is holding.'}
+      </p>` : ''}
     ${sessions.length ? sessions.map(s => {
       const mins = Math.round((s.ended - s.started) / 60000);
       return `<p class="msg plainmsg" style="text-align:left">

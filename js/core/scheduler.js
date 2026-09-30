@@ -88,6 +88,17 @@ function scoreWord(w, targets, history, maxLevel) {
 /**
  * Build a session: a short warm-up, a main block on the target morphemes,
  * and one or two deliberately oversized words at the end.
+ *
+ * THE BUDGET. The home screen says ten minutes, and everything below adds to
+ * a single run: the base plan, two look-alike items, two dictation, one sound
+ * hunt, two sound swaps, one rotating anti-compensation item and one invented
+ * word. That is about nineteen, and the mid-session moves can push it further
+ * — a repeated miss injects two easier words, and a good run OFFERS four more.
+ *
+ * Before adding another block, look at Teacher: it now reports how long his
+ * sessions actually run, from the session records rather than from an
+ * estimate. tools/test.mjs fails if a planned session exceeds the cap, which
+ * is there so the promise on the home screen cannot drift silently.
  */
 export function planSession({ items = 14, maxLevel = 5 } = {}) {
   const targets = targetMorphemes(6);

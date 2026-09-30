@@ -123,6 +123,41 @@ export function fluencySummary() {
 }
 
 /** His typical time for an activity, for judging whether an answer was fast. */
+/**
+ * How long sessions actually run.
+ *
+ * The home screen promises ten minutes, and that promise has quietly been
+ * asked to carry more every time a Kilpatrick block joined the mix. Rather
+ * than estimate from item counts — which needs a guess for every activity and
+ * would be wrong for him specifically — this reads the session records, which
+ * have carried start and end times all along and were never summarised.
+ *
+ * MEDIAN, not mean: one interrupted run should not move the number. Sessions
+ * longer than three quarters of an hour are dropped entirely, because that is
+ * not a long session, it is a tab left open on the desk.
+ */
+export const SESSION_BUDGET_MIN = 12;
+const ABANDONED_MIN = 45;
+
+export function sessionPace(limit = 10) {
+  const S = load();
+  const rows = (S?.sessions || [])
+    .slice(-limit)
+    .map(x => ({ mins: (x.ended - x.started) / 60000, items: x.items || 0 }))
+    .filter(x => x.mins > 0 && x.mins < ABANDONED_MIN && x.items > 0);
+  if (!rows.length) return null;
+
+  const mins = median(rows.map(r => r.mins));
+  const items = median(rows.map(r => r.items));
+  return {
+    n: rows.length,
+    minutes: Math.round(mins * 10) / 10,
+    items: Math.round(items),
+    secondsPerItem: items ? Math.round((mins * 60) / items) : null,
+    overBudget: mins > SESSION_BUDGET_MIN,
+  };
+}
+
 export function typicalMs(activity = 'autopsy') {
   const S = load();
   if (!S) return null;

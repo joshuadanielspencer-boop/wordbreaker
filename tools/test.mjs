@@ -337,6 +337,36 @@ const DAY = 86400000;
   console.warn = warn;
 }
 
+// ------------------------------------------------------------ session budget
+{
+  describe('session budget');
+  const { planSession } = await import('../js/core/scheduler.js');
+  const { sessionPace, SESSION_BUDGET_MIN } = await import('../js/core/fluency.js');
+
+  profile();
+  // The home screen promises ten minutes. Every Kilpatrick block added since
+  // has been added to the same run, so this is the guard that stops the
+  // promise drifting silently one block at a time.
+  const CAP = 20;
+  let worst = 0;
+  for (let i = 0; i < 20; i++) worst = Math.max(worst, planSession({ items: 10 }).seq.length);
+  ok(worst <= CAP, `a planned session stays within ${CAP} items`, `worst was ${worst}`);
+
+  // Pace comes from the session records, and one abandoned run must not move it.
+  const p = profile();
+  const at = (mins, items) => ({ started: 0, ended: mins * 60000, items, correct: items });
+  p.sessions = [at(9, 19), at(10, 19), at(11, 19)];
+  eq(sessionPace().minutes, 10, 'pace is the median session length');
+  eq(sessionPace().items, 19, 'and the median item count');
+
+  p.sessions = [at(9, 19), at(10, 19), at(600, 19), at(11, 19)];
+  eq(sessionPace().minutes, 10, 'a session left open all afternoon is ignored, not averaged in');
+  eq(sessionPace().n, 3, 'and is not counted');
+
+  p.sessions = [at(20, 19), at(22, 19), at(21, 19)];
+  ok(sessionPace().overBudget, `${SESSION_BUDGET_MIN}+ minute sessions are reported as over budget`);
+}
+
 // ------------------------------------------------------------------ report
 console.log(`tests: ${passed} passed, ${failures.length} failed`);
 if (failures.length) {
