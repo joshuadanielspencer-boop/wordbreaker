@@ -647,9 +647,28 @@ must never reach the deployed site.
 - **More chapters** — twenty is about twenty sessions of runway. The second
   arc ends the way the first one did, with another notice going up, so a third
   is set up but not written.
-- **More Detective notes.** 272 of 519 words now have one (212 hand-written,
-  60 derived). The remaining gap is mostly `-able`/`-ible` adjectives, which
-  need a past participle ("able to be seen") that cannot be composed
-  mechanically from "to see" without an irregular-verb table. The gap is mostly
-  `-tion` derivatives, which the scheduler favours, so it currently substitutes
-  an annotated word into detective slots rather than degrading them.
+- **More Detective notes.** 388 of 519 words have one (212 hand-written, 176
+  derived). What is left is mostly `-ly`, `-ity`, `-ance` and `-ant`, and they
+  are left on purpose: those frames want the base WORD rather than its literal
+  reading, and "in a full of care way" is not English.
+
+  `tools/gen-notes.mjs` composes the rest from a hand-written base plus the
+  trailing suffix, and it now does two things it did not:
+
+  - **It derives prefix + verb root directly** — `ex` + `press` is "to press
+    out" — which was the real gap. `-tion` words were missing not because the
+    frame was absent but because their bases were: `reconstruction` needs
+    `reconstruct`, and nothing could build that.
+  - **It chains to a fixed point**, so a derived meaning can be a base for the
+    next one. That is what turns `reconstruct` into `reconstruction`.
+
+  `-able` is no longer excluded; it needs a past participle, so there is a
+  short irregular-verb table. Only verbs that actually appear as roots are in
+  it.
+
+  The generator refuses far more than it used to, which is the point. A base
+  that is not a single plain word gets no note rather than a mangled one —
+  "full of be afraid", "able to be gone toward" and "to look at back" were all
+  produced on the first pass and are all now declined. Two bugs in the existing
+  gerund rule surfaced the same way: `lead` and `treat` were doubling their
+  final consonant, giving "leadding" and "treatting".

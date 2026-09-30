@@ -32,7 +32,7 @@ function gerund(phrase) {
   const [head, ...rest] = stripTo(phrase).split(' ');
   let g = head;
   if (/e$/.test(g) && !/ee$/.test(g)) g = g.slice(0, -1) + 'ing';
-  else if (/^[a-z]*[aeiou][bdgmnpt]$/.test(g)) g = g + g.slice(-1) + 'ing';
+  else if (/(^|[^aeiou])[aeiou][bdgmnpt]$/.test(g)) g = g + g.slice(-1) + 'ing';
   else g = g + 'ing';
   return [g, ...rest].join(' ');
 }
@@ -48,6 +48,10 @@ function thirdPerson(phrase) {
 }
 
 const isVerb = s => /^to\s/.test(s);
+
+/** A single plain word once "to " is off the front — `help`, `care`, `bend`.
+ *  Not `be afraid`, and not `go toward`. */
+const nounish = s => /^[a-z]+$/.test(stripTo(firstSense(s)));
 
 // Count nouns need an article; mass nouns do not. "to do with a tooth" reads;
 // "to do with tooth" does not, and "to do with a death" does not either.
@@ -73,10 +77,62 @@ function article(noun) {
   return (/^[aeiou]/.test(head) ? 'an ' : 'a ') + noun;
 }
 
+/**
+ * seen, heard, believed, bent. `-able` means "able to be VERBED", which needs
+ * a past participle, and that is why this suffix was left out originally. The
+ * irregular list is short because the corpus is: only verbs that actually
+ * appear as roots are here.
+ */
+const IRREGULAR_PARTICIPLE = {
+  see: 'seen', hear: 'heard', hold: 'held', bend: 'bent', send: 'sent',
+  build: 'built', break: 'broken', take: 'taken', throw: 'thrown',
+  write: 'written', speak: 'spoken', choose: 'chosen', do: 'done',
+  lead: 'led', feel: 'felt', read: 'read', stand: 'stood', run: 'run',
+  come: 'come', go: 'gone', give: 'given', make: 'made', put: 'put',
+  drive: 'driven', tear: 'torn', bring: 'brought', teach: 'taught',
+  think: 'thought', know: 'known', say: 'said', eat: 'eaten',
+};
+function participle(phrase) {
+  const [head, ...rest] = stripTo(phrase).split(' ');
+  const irr = IRREGULAR_PARTICIPLE[head];
+  let v = irr;
+  if (!v) {
+    if (/e$/.test(head)) v = head + 'd';
+    else if (/[^aeiou]y$/.test(head)) v = head.slice(0, -1) + 'ied';
+    else if (/(^|[^aeiou])[aeiou][bdgmnpt]$/.test(head)) v = head + head.slice(-1) + 'ed';
+    else v = head + 'ed';
+  }
+  return [v, ...rest].join(' ');
+}
+
+/**
+ * What a prefix does to the verb in front of it, in one word a child would
+ * use. This is the composition the whole app is about — `ex` + `press` is "to
+ * press out" — and it unlocks far more than the suffix frames do, because
+ * these words are then bases for -tion, -ive and -ment in turn.
+ *
+ * Only prefixes whose direction is plain are listed. `dis` is missing on
+ * purpose: it negates in `disagree` and reverses in `discover`, and guessing
+ * between them would produce a meaning that is simply false.
+ */
+const DIRECTION = {
+  ex: 'out', in_into: 'in', re: 'back', con: 'together', sub: 'under',
+  trans: 'across', pro: 'forward', de: 'down', inter: 'between',
+  per: 'through', ob: 'against', circum: 'around', pre: 'before',
+  post: 'after', super: 'above', ad: 'toward', se: 'apart', over: 'too much',
+  mis: 'wrongly', tele: 'far off', intra: 'inside', contra: 'against',
+};
+
+// Prefixes that mean "not", and only ever mean "not". `un` reverses in front
+// of a verb (`uncover` is not "not cover"), so the wrapper below applies it
+// only to adjectives.
+const NEGATORS = new Set(['un', 'in_not', 'non']);
+const ADJ_SUFFIX = new Set(['able', 'ful', 'less', 'ous', 'ive', 'al', 'ic', 'ant', 'ed']);
+
 // Frames, keyed by the trailing suffix morpheme. Only suffixes that compose
-// reliably are here. `-able` is deliberately absent: it needs a past
-// participle ("able to be seen"), which cannot be produced mechanically from
-// "to see" without an irregular-verb table. Those stay hand-written.
+// reliably are here. `-ly` and `-ity` are deliberately absent: both want the
+// base WORD rather than its literal reading, and "in a full of care way" is
+// not English.
 const FRAMES = {
   tion: { needs: 'verb', build: b => `the act of ${gerund(b)}` },
   ure:  { needs: 'verb', build: b => `the act of ${gerund(b)}` },
@@ -85,9 +141,19 @@ const FRAMES = {
   er:   { needs: 'verb', build: b => `the one that ${thirdPerson(b)}` },
   ive:  { needs: 'verb', build: b => `tending to ${stripTo(b)}` },
   ment: { needs: 'verb', build: b => `the result of ${gerund(b)}` },
+  // `able to be gone toward` is not English. A participle is only safe on a
+  // one-word verb, so a base carrying a direction is refused.
+  able: { needs: 'verb', ok: nounish, build: b => `able to be ${participle(b)}` },
   al:   { needs: 'noun', build: b => `to do with ${article(firstSense(b))}` },
   ic:   { needs: 'noun', build: b => `to do with ${article(firstSense(b))}` },
   ous:  { needs: 'noun', build: b => `full of ${firstSense(b)}` },
+  // -ful and -less want a noun. Many roots are glossed as verbs whose bare
+  // stem is also the noun ("to help" -> help), which reads fine. "to be
+  // afraid" has no such stem, and produced "full of be afraid" — so anything
+  // that is not a single plain word is refused rather than mangled.
+  ful:  { needs: 'any', ok: nounish, build: b => `full of ${stripTo(firstSense(b))}` },
+  less: { needs: 'any', ok: nounish, build: b => `without ${stripTo(firstSense(b))}` },
+  ness: { needs: 'noun', build: b => `the state of being ${firstSense(b)}` },
   ist:  { needs: 'noun', build: b => `one who works with ${plural(firstSense(b))}` },
   ism:  { needs: 'noun', build: b => `a belief about ${firstSense(b)}` },
   ary:  { needs: 'noun', build: b => `a place for ${plural(firstSense(b))}` },
@@ -102,36 +168,82 @@ for (const w of WORD_LIST) {
   bySignature.set(w.morphemes.join('+'), note.lit);
 }
 
-const derived = [];
-const skipped = { noFrame: 0, noBase: 0, wrongType: 0 };
+const lits = new Map(bySignature);          // signature -> literal reading
+const derived = new Map();                  // text -> lit
 
-for (const w of WORD_LIST) {
-  if (NOTES[w.text]) continue;
-  if (w.parts.length < 2) continue;
+/** prefix* + verb root, e.g. ex + press -> "to press out". */
+function fromPrefixes(w) {
+  const ids = w.morphemes;
+  if (ids.length < 2 || ids.length > 3) return null;
+  const rootId = ids[ids.length - 1];
+  const root = MORPH[rootId];
+  if (!root || root.type !== 'root' || !isVerb(root.gloss)) return null;
 
+  // `view` is glossed "to look at", and a direction on the end of that gives
+  // "to look at back". Only single-word verbs take one cleanly.
+  if (!nounish(root.gloss)) return null;
+
+  const prefixes = ids.slice(0, -1);
+  if (!prefixes.every(id => MORPH[id]?.type === 'prefix' && DIRECTION[id])) return null;
+
+  // Innermost prefix first: re + con + struct is "to build together again".
+  const dirs = prefixes.map(id => DIRECTION[id]).reverse();
+  return `to ${stripTo(root.gloss)} ${dirs.join(' ')}`;
+}
+
+/** not + an adjective, e.g. in + visible -> "not able to be seen". */
+function fromNegation(w) {
+  const ids = w.morphemes;
+  if (ids.length < 2 || !NEGATORS.has(ids[0])) return null;
+  if (!ADJ_SUFFIX.has(ids[ids.length - 1])) return null;
+  const inner = lits.get(ids.slice(1).join('+'));
+  return inner ? `not ${inner}` : null;
+}
+
+function fromSuffix(w) {
   const last = w.morphemes[w.morphemes.length - 1];
   const frame = FRAMES[last];
-  if (!frame) { skipped.noFrame++; continue; }
+  if (!frame) return null;
 
   const baseIds = w.morphemes.slice(0, -1);
-  let baseLit = bySignature.get(baseIds.join('+'));
-
+  let baseLit = lits.get(baseIds.join('+'));
   // A bare root falls back to the root's own gloss: `formal` is form + al, and
   // `form` is not a corpus word, but the root means "shape".
   if (!baseLit && baseIds.length === 1 && MORPH[baseIds[0]].type === 'root') {
     baseLit = MORPH[baseIds[0]].gloss;
   }
-  if (!baseLit) { skipped.noBase++; continue; }
-
-  const verb = isVerb(baseLit);
-  if ((frame.needs === 'verb') !== verb) { skipped.wrongType++; continue; }
-
-  derived.push({ text: w.text, lit: frame.build(baseLit), from: baseIds.join('+') });
+  if (!baseLit) return null;
+  if (frame.needs !== 'any' && (frame.needs === 'verb') !== isVerb(baseLit)) return null;
+  if (frame.ok && !frame.ok(baseLit)) return null;
+  return frame.build(baseLit);
 }
 
-derived.sort((a, b) => a.text.localeCompare(b.text));
+// Derivation CHAINS, so it runs to a fixed point. `reconstruct` has to exist
+// before `reconstruction` can, and neither was reachable before: the first
+// needs the prefix frame, the second needs the first. Each pass can only add.
+let pass = 0;
+for (;;) {
+  let added = 0;
+  pass++;
+  for (const w of WORD_LIST) {
+    if (NOTES[w.text] || derived.has(w.text)) continue;
+    if (w.parts.length < 2) continue;
 
-const body = derived.map(d => `  ${JSON.stringify(d.text)}: ${JSON.stringify(d.lit)},`).join('\n');
+    const lit = fromSuffix(w) || fromNegation(w) || fromPrefixes(w);
+    if (!lit) continue;
+
+    derived.set(w.text, lit);
+    const sig = w.morphemes.join('+');
+    if (!lits.has(sig)) lits.set(sig, lit);
+    added++;
+  }
+  if (!added) break;
+}
+
+const rows = [...derived.entries()].map(([text, lit]) => ({ text, lit }))
+  .sort((a, b) => a.text.localeCompare(b.text));
+
+const body = rows.map(d => `  ${JSON.stringify(d.text)}: ${JSON.stringify(d.lit)},`).join('\n');
 writeFileSync(resolve(ROOT, 'js/content/notes-derived.js'), `// GENERATED by tools/gen-notes.mjs — do not edit by hand.
 //
 // Literal meanings composed mechanically from a hand-written base note plus
@@ -144,7 +256,7 @@ ${body}
 };
 `);
 
-console.log(`js/content/notes-derived.js — ${derived.length} derived`);
-console.log(`skipped: ${skipped.noFrame} no frame, ${skipped.noBase} no annotated base, ${skipped.wrongType} verb/noun mismatch`);
+console.log(`js/content/notes-derived.js — ${rows.length} derived in ${pass} passes`);
+
 console.log('\nsample:');
-for (const d of derived.slice(0, 14)) console.log(`  ${d.text.padEnd(18)} ${d.lit}`);
+for (const d of rows.slice(0, 14)) console.log(`  ${d.text.padEnd(18)} ${d.lit}`);
