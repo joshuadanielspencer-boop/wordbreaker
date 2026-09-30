@@ -26,6 +26,8 @@ import { parseWordList, proposeSpec, validateEntry, saveList, deleteList, userLi
 import { MORPH, drillableMorphemes, originLabel } from '../content/lexicon.js';
 import { voiceQuality } from '../core/speech.js';
 import { sessionPace } from '../core/fluency.js';
+import { readings, miscueMovement, MISCUE_TYPES, TYPE_LABEL } from '../core/readaloud.js';
+import { renderReadAloud } from './readaloud.js';
 import { level, LEVEL_NAME, weakest, entry as mastEntry } from '../core/mastery.js';
 import { SKILLS, LADDER } from '../content/math.js';
 
@@ -131,6 +133,9 @@ export function renderTeacher(app, opts) {
       <button class="btn big" data-act="probe-spelling">
         Nonsense spelling probe${due(SPELLING) ? ' &nbsp;·&nbsp; due' : ''}
       </button>
+      <button class="btn big" data-act="readaloud">
+        Reading aloud &nbsp;·&nbsp; log the miscues${readings().length ? ` &nbsp;·&nbsp; ${readings().length} so far` : ''}
+      </button>
     </div>
 
     <div class="section-title">the record</div>
@@ -152,6 +157,8 @@ export function renderTeacher(app, opts) {
   app.querySelector('[data-act="back"]').onclick = onBack;
   app.querySelector('[data-act="past"]').onclick = () => renderPastForm(app, opts);
   app.querySelector('[data-act="backup"]').onclick = opts.onBackup;
+  app.querySelector('[data-act="readaloud"]').onclick = () =>
+    renderReadAloud(app, { onBack: () => renderTeacher(app, opts), onDone: () => renderTeacher(app, opts) });
   const pr = app.querySelector('[data-act="past-run"]');
   if (pr) pr.onclick = () => renderPastRun(app, opts);
   const pl = app.querySelector('[data-act="past-load"]');
@@ -251,6 +258,40 @@ export function renderEvidence(app, opts) {
 
     ${probeBlock(DECODING)}
     ${probeBlock(SPELLING)}
+
+    ${(() => {
+      const r = readings();
+      if (!r.length) return `
+        <div class="section-title">reading aloud</div>
+        <p class="msg plainmsg">Never recorded. This is the one pre-registered
+        measure that cannot be collected without sitting with him.</p>`;
+      const mv = miscueMovement();
+      return `
+        <div class="section-title">reading aloud — miscue mix</div>
+        <table class="evidence-table">
+          <tr><th>when</th><th>passage</th><th>miscues</th><th>per 100 words</th><th>guesses</th></tr>
+          ${r.map((x, i) => `
+            <tr class="${i === 0 ? 'baseline-row' : ''}">
+              <td>${fmtDay(x.t)}${i === 0 ? ' <span class="tag">first</span>' : ''}</td>
+              <td>${esc(x.label || '—')}</td>
+              <td>${x.miscues}</td>
+              <td>${x.per100 === null ? '—' : x.per100}</td>
+              <td>${x.guessShare === null ? '—' : pct(x.guessShare)}</td>
+            </tr>`).join('')}
+        </table>
+        ${mv ? `
+          <p class="msg plainmsg movement">
+            Since the first reading (${mv.weeks} week${mv.weeks === 1 ? '' : 's'}):
+            ${mv.ratePoints !== null ? `miscues per hundred words <b>${signed(mv.ratePoints)}</b>, ` : ''}
+            share that are guesses <b>${signed(mv.guessSharePoints)} points</b>.
+          </p>` : `<p class="msg plainmsg">One reading is a point, not a trend.</p>`}
+        <p class="msg plainmsg fineprint">
+          A predicts first-letter and context guesses <b>fall sharply</b> while
+          ordinary slips remain. B predicts the <b>mix is unchanged</b> and only
+          the volume moves. The last column is what separates them; the total is
+          not.
+        </p>`;
+    })()}
 
     <div class="section-title">the PAST</div>
     ${!ps ? `<p class="msg plainmsg">Never administered.</p>` : `

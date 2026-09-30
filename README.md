@@ -164,6 +164,8 @@ js/content/manipulation.js  GENERATED — phoneme manipulation items
 js/core/manipdrills.js      which Sound Swap item comes next
 js/activities/manipulate.js the Sound Swap drill
 js/core/userlists.js  spelling lists typed in by an adult
+js/core/readaloud.js  oral-reading miscues, typed and counted
+js/ui/readaloud.js    the tap-while-listening screen
 tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs,
                       gen-pseudo.mjs, gen-notes.mjs
 ```
@@ -611,6 +613,23 @@ producing a made-up automaticity profile would still *look* like evidence, and
 automatic at baseline". There is also a paper fallback: a quick recorder for a
 PAST run away from the computer.
 
+**Reading aloud** is the one measure that needs nothing from the app but an
+adult's attention. He reads from his own book; the screen is a grid of large
+buttons and the adult taps what they hear, with 1-7 and space as shortcuts
+because the adult should be watching him rather than the screen.
+
+Every miscue is **typed**, and that is the whole point. The two readings in
+`predictions.md` make opposite claims about the same child: under A,
+first-letter and context guesses fall sharply while ordinary slips remain;
+under B the mix is unchanged and only the volume moves. A running total of
+mistakes cannot separate those, so the evidence view reports the SHARE that
+are guesses next to the rate per hundred words. Self-corrections are recorded
+and never counted against him — catching your own error is the skill arriving.
+
+There is a clock on that screen, which the rest of the app forbids. The rule
+is that a timer must never appear in front of the learner while he works; this
+is the adult's screen, and a reading rate needs a duration.
+
 The evidence view prints compliance next to the outcome rather than on another
 screen, because `predictions.md` names it as a confound: a flat result at three
 sessions a week means something and at three a fortnight means nothing.
@@ -630,7 +649,7 @@ must never reach the deployed site.
   with the app, not runtime synthesis.
 - **The rest of the oral block.** The Nonsense Ladder is built and adult-scored;
   what is still missing is the solo variant that records clips against item ids
-  for later review, and the Reading Aloud miscue log. Do not use ASR to score
+  for later review. Do not use ASR to score
   pseudowords — Whisper and browser speech recognition are language-model driven
   and will "correct" `splonter` to `splinter`, failing hardest on the most
   diagnostic task.

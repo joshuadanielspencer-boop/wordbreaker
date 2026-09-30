@@ -134,7 +134,7 @@ without it, which is the real reason this phase came next — not completeness.
 | **The Nonsense Ladder** | reading aloud must be heard | ✅ Built as the primary-outcome probe. Adult scores 1 (letter-by-letter) / 2 (sounded then blended) / 3 (instant). The solo audio-recording variant is not built. |
 | **The evidence view** | — | ✅ Built, last rather than first. A dashboard at n=0 is worse than none: trend lines through three points invite exactly the after-the-fact reinterpretation `predictions.md` exists to prevent. |
 | **One Minute Activities** | phoneme manipulation is oral | ◐ The solo half is built as **Sound Swap**: he hears the word and types the result, scored phonetically, two items a session. That is training only — typing latency is his hands, not his phonology. The adult-administered oral version, with the two-second window, is still deferred. It is *intervention*, not measurement, and its own sequencing rule — start at D1 whatever the PAST says — means it does not depend on the Gate 0 result, so it blocks nothing. The `activities.json` item bank does not exist in the repo yet. |
-| **Reading Aloud** | miscues must be heard | ⏳ Deferred. Secondary outcome. Every error logged with type; Kilpatrick's evidence is that correcting *every* error beats correcting only meaning-changing ones. |
+| **Reading Aloud** | miscues must be heard | ✅ Built. He reads from his own book; the adult taps what they hear. Every miscue is TYPED, because the prediction turns on the mix and not the volume — first-letter and context guesses are counted apart from ordinary slips, and the evidence view reports the share. Self-corrections are recorded and never counted against him. Kilpatrick's evidence is that correcting *every* error beats correcting only meaning-changing ones, so there is no "minor error" bucket to park things in. |
 
 Sequencing for One Minute Activities is Kilpatrick's, not invented: start at D1
 whatever the PAST says and climb one activity per level until he struggles;
@@ -238,8 +238,7 @@ Built, with the pre-registered thresholds printed next to the numbers rather
 than recalled from memory, and compliance printed next to the outcome rather
 than on another screen — `predictions.md` names session frequency as a confound,
 and a confound on a different screen is a confound that gets forgotten at the
-moment of interpretation. Oral-reading miscues are the one listed measure not
-yet collected, because Reading Aloud is deferred.
+moment of interpretation. Every measure listed above can now be collected.
 
 ---
 

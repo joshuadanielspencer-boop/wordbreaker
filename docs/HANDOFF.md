@@ -154,9 +154,9 @@ Built, Phase 3     Teacher area — PAST administration (form loaded by the
                    evidence view, spelling report, review-the-misses drill,
                    whole-list spelling test
 Built, solo        Sound Swap — phoneme manipulation, typed, two a session
+Built, teacher     Reading Aloud — typed miscue log; the mix is the measure
 Not built          One Minute Activities as Kilpatrick runs them (oral, adult,
-                   two-second window), Reading Aloud miscue log, Phase 4
-                   word-study enrichment
+                   two-second window), Phase 4 word-study enrichment
 ```
 
 **Gate 0 is the blocker, and it is not a coding task.** All three baselines can

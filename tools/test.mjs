@@ -337,6 +337,44 @@ const DAY = 86400000;
   console.warn = warn;
 }
 
+// ------------------------------------------------------------ reading aloud
+{
+  describe('reading aloud');
+  const ra = await import('../js/core/readaloud.js');
+
+  profile();
+  const mark = t => ({ t: 0, type: t });
+  ra.recordReading({
+    label: 'a book', words: 200, seconds: 120,
+    marks: [mark('first'), mark('first'), mark('context'), mark('ending'),
+            mark(ra.SELF_CORRECTED)],
+  });
+  const [r] = ra.readings();
+
+  eq(r.miscues, 4, 'a self-correction is not a miscue');
+  eq(r.selfCorrected, 1, 'it is counted separately — it is the skill arriving');
+  eq(r.guesses, 3, 'first-letter and context guesses are counted apart');
+  eq(r.guessShare, 0.75, 'and reported as a share of the errors he made');
+  eq(r.per100, 2, 'the rate is per hundred words, so passages compare');
+
+  ok(!ra.miscueMovement(), 'one reading is a point, not a trend');
+
+  // The prediction turns on the MIX, not the volume: under A the guesses fall
+  // away while ordinary slips remain. A total alone cannot show that.
+  ra.recordReading({
+    label: 'a book', words: 200, seconds: 120,
+    marks: [mark('first'), mark('ending'), mark('middle'), mark('skipped')],
+  });
+  const mv = ra.miscueMovement();
+  eq(mv.ratePoints, 0, 'the same number of miscues is no change in rate');
+  eq(mv.guessSharePoints, -50, 'but the share that are guesses halved, which is the finding');
+
+  profile();
+  ra.recordReading({ label: 'no count', words: null, seconds: 60, marks: [mark('first')] });
+  eq(ra.readings()[0].per100, null, 'without a word count there is no rate, and it says so');
+  eq(ra.readings()[0].guessShare, 1, 'but the mix still works — that is the part that matters');
+}
+
 // ------------------------------------------------------------ session budget
 {
   describe('session budget');

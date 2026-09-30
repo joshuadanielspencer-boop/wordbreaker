@@ -837,3 +837,30 @@ body {
   font-family: var(--mono); font-size: 14px; line-height: 1.6;
   color: var(--ink-dim); padding-left: 1.6em; white-space: pre-line;
 }
+
+/* ---------- reading aloud: tap without looking ---------- */
+.ra-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.ra-head b { font-size: 18px; }
+.ra-head span { color: var(--ink-dim); font-size: 14px; }
+.ra-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.ra-extra { margin-top: 8px; }
+.btn.ra-key {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  text-align: left; padding: 14px 16px; min-height: 76px; position: relative;
+}
+.btn.ra-key b { font-size: 16px; }
+.btn.ra-key span { font-size: 12px; color: var(--ink-dim); font-weight: 400; line-height: 1.35; }
+.btn.ra-key .ra-num {
+  position: absolute; top: 8px; right: 10px; font-family: var(--mono);
+  font-size: 11px; color: var(--ink-dim);
+}
+.btn.ra-key.good { border-color: var(--good); }
+.ra-tape { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.ra-chip {
+  font-size: 12px; background: var(--surface-2); color: var(--ink-dim);
+  padding: 4px 10px; border-radius: 999px;
+}
+.ra-chip.good { color: var(--good); }
