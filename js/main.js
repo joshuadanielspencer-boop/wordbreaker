@@ -3,7 +3,7 @@ import {
   signOut, deleteProfile, renameProfile, exportProfile, importProfile,
   resetProfile, requestPersistence, backupStatus, markBackedUp, AVATARS,
 } from './core/store.js';
-import { initSpeech } from './core/speech.js';
+import { initSpeech, speechAvailable } from './core/speech.js';
 import { planSession, recoveryItem, itemsForMorpheme, encoreItems } from './core/scheduler.js';
 import { record, level, LEVEL } from './core/mastery.js';
 import { push as logPush } from './core/log.js';
@@ -31,7 +31,7 @@ import { renderChapter, renderLibrary, chapterOwed, gateWordFor, markUnlocked, u
 import { CHAPTERS } from './content/story.js';
 import { renderSlaughter } from './ui/slaughter.js';
 import { renderTeacher } from './ui/teacher.js';
-import { probeItems, PROBE_LABEL, DECODING } from './core/probe.js';
+import { probeItems, PROBE_LABEL, DECODING, SPELLING } from './core/probe.js';
 import { recordPast } from './core/past.js';
 import { drillQueue, reviewQueue, spellingTestQueue, missionTestReady, allMissions, missionProgress } from './core/mission.js';
 import { missionById } from './content/lexicon.js';
@@ -412,6 +412,15 @@ async function runSession(customPlan) {
       document.getElementById('stage'), subject,
       { personality: S.settings.personality, mode: step.mode });
     if (aborted) return;
+
+    // An activity that could not run (no voice, no word to use) resolves as
+    // correct so the session can continue. That must not reach the log: it
+    // would count as a right answer he never gave, and the adaptive ladders
+    // read recent accuracy to decide when to make things harder.
+    if (res.detail?.skipped) {
+      await new Promise(r => setTimeout(r, 200));
+      continue;
+    }
 
     results.push(res.correct);
     if (res.correct) correct++;
@@ -799,6 +808,17 @@ function teacherView() {
  */
 async function runProbe(kind) {
   const S = load();
+
+  // The spelling probe IS dictation, and dictation with no voice resolves
+  // every item as correct. That would write a fabricated 100% baseline — the
+  // one number every later score is compared against — and spend twelve
+  // held-out words doing it. Refuse rather than record a lie.
+  if (kind === SPELLING && !speechAvailable()) {
+    alert('No speech voice is available yet, so the words cannot be read out.\n\n'
+        + 'Reload the page and give it a moment, then try again. Nothing has been recorded.');
+    return teacherView();
+  }
+
   const seq = probeItems(kind);
   if (!seq.length) {
     alert('The held-out pool for this probe is exhausted. Regenerate items with tools/gen-nonsense.mjs before running it again.');
@@ -830,6 +850,13 @@ async function runProbe(kind) {
       document.getElementById('stage'), step,
       { personality: S.settings.personality });
     if (aborted) return;
+
+    // An activity that could not run must never contribute a score. Losing the
+    // run costs a few minutes; a half-invented baseline costs the study.
+    if (res.detail?.skipped) {
+      alert(`This probe could not run (${res.detail.skipped}). Nothing has been recorded.`);
+      return teacherView();
+    }
 
     records.push({
       activity: kind,

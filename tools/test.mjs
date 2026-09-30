@@ -428,6 +428,28 @@ const DAY = 86400000;
   eq(ra.readings()[0].guessShare, 1, 'but the mix still works — that is the part that matters');
 }
 
+// ------------------------------------------------------- probes and silence
+{
+  describe('a probe that cannot run');
+  const { pronunciations } = await import('../js/core/phonics.js');
+  const dictation = await import('../js/activities/dictation.js');
+
+  // dictation resolves as CORRECT when there is no voice, so the session can
+  // carry on. Nothing that records a score may treat that as an answer: a
+  // spelling probe run without speech would write a fabricated 100% baseline,
+  // which is the number every later score is compared against.
+  const saved = globalThis.speechSynthesis;
+  globalThis.speechSynthesis = undefined;
+  const el = { innerHTML: '', querySelector: () => null, querySelectorAll: () => [] };
+  const res = await dictation.mount(el, { word: { text: 'frabe' }, pattern: 'silent_e' }, {});
+  globalThis.speechSynthesis = saved;
+
+  ok(res.detail?.skipped, 'it reports that it could not run');
+  ok(res.correct === true, 'and resolves as correct so a session is not blocked');
+  ok(!!res.detail.skipped, 'so every caller that records a score must check detail.skipped');
+  ok(pronunciations('frabe').size > 0, 'harness sanity: phonics still works with speech gone');
+}
+
 // ------------------------------------------------------------ session budget
 {
   describe('session budget');
