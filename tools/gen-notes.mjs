@@ -171,10 +171,16 @@ for (const w of WORD_LIST) {
 const lits = new Map(bySignature);          // signature -> literal reading
 const derived = new Map();                  // text -> lit
 
-/** prefix* + verb root, e.g. ex + press -> "to press out". */
-function fromPrefixes(w) {
-  const ids = w.morphemes;
-  if (ids.length < 2 || ids.length > 3) return null;
+/**
+ * ONE prefix + a verb root, e.g. ex + press -> "to press out".
+ *
+ * Two prefixes were tried and declined. Stacking directions reads badly at the
+ * end of a phrase — `re` means both "again" and "back", and whichever is
+ * chosen, one of "the act of building together back" or "to lead again"
+ * is wrong. It bought two words and cost the grammar of both.
+ */
+function fromPrefixes(ids) {
+  if (ids.length !== 2) return null;
   const rootId = ids[ids.length - 1];
   const root = MORPH[rootId];
   if (!root || root.type !== 'root' || !isVerb(root.gloss)) return null;
@@ -186,9 +192,7 @@ function fromPrefixes(w) {
   const prefixes = ids.slice(0, -1);
   if (!prefixes.every(id => MORPH[id]?.type === 'prefix' && DIRECTION[id])) return null;
 
-  // Innermost prefix first: re + con + struct is "to build together again".
-  const dirs = prefixes.map(id => DIRECTION[id]).reverse();
-  return `to ${stripTo(root.gloss)} ${dirs.join(' ')}`;
+  return `to ${stripTo(root.gloss)} ${DIRECTION[prefixes[0]]}`;
 }
 
 /** not + an adjective, e.g. in + visible -> "not able to be seen". */
@@ -200,18 +204,31 @@ function fromNegation(w) {
   return inner ? `not ${inner}` : null;
 }
 
+/**
+ * The literal reading of a run of morphemes, whether or not English happens to
+ * have a word for it.
+ *
+ * `reconstruction` is re + con + struct + tion, and its base is re + con +
+ * struct — which is not a corpus word, so chaining through real words alone
+ * never reached it. But the pieces compose perfectly well on their own: "to
+ * build together again". The base only has to exist as a MEANING for the word
+ * built on top of it to be derivable.
+ */
+function litForIds(ids) {
+  const known = lits.get(ids.join('+'));
+  if (known) return known;
+  // A bare root falls back to the root's own gloss: `formal` is form + al, and
+  // `form` is not a corpus word, but the root means "shape".
+  if (ids.length === 1 && MORPH[ids[0]]?.type === 'root') return MORPH[ids[0]].gloss;
+  return fromPrefixes(ids);
+}
+
 function fromSuffix(w) {
   const last = w.morphemes[w.morphemes.length - 1];
   const frame = FRAMES[last];
   if (!frame) return null;
 
-  const baseIds = w.morphemes.slice(0, -1);
-  let baseLit = lits.get(baseIds.join('+'));
-  // A bare root falls back to the root's own gloss: `formal` is form + al, and
-  // `form` is not a corpus word, but the root means "shape".
-  if (!baseLit && baseIds.length === 1 && MORPH[baseIds[0]].type === 'root') {
-    baseLit = MORPH[baseIds[0]].gloss;
-  }
+  const baseLit = litForIds(w.morphemes.slice(0, -1));
   if (!baseLit) return null;
   if (frame.needs !== 'any' && (frame.needs === 'verb') !== isVerb(baseLit)) return null;
   if (frame.ok && !frame.ok(baseLit)) return null;
@@ -229,7 +246,7 @@ for (;;) {
     if (NOTES[w.text] || derived.has(w.text)) continue;
     if (w.parts.length < 2) continue;
 
-    const lit = fromSuffix(w) || fromNegation(w) || fromPrefixes(w);
+    const lit = fromSuffix(w) || fromNegation(w) || fromPrefixes(w.morphemes);
     if (!lit) continue;
 
     derived.set(w.text, lit);

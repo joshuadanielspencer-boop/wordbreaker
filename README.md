@@ -647,7 +647,7 @@ must never reach the deployed site.
 - **More chapters** — twenty is about twenty sessions of runway. The second
   arc ends the way the first one did, with another notice going up, so a third
   is set up but not written.
-- **More Detective notes.** 388 of 519 words have one (212 hand-written, 176
+- **More Detective notes.** 400 of 519 words have one (212 hand-written, 188
   derived). What is left is mostly `-ly`, `-ity`, `-ance` and `-ant`, and they
   are left on purpose: those frames want the base WORD rather than its literal
   reading, and "in a full of care way" is not English.
@@ -655,12 +655,19 @@ must never reach the deployed site.
   `tools/gen-notes.mjs` composes the rest from a hand-written base plus the
   trailing suffix, and it now does two things it did not:
 
-  - **It derives prefix + verb root directly** — `ex` + `press` is "to press
-    out" — which was the real gap. `-tion` words were missing not because the
-    frame was absent but because their bases were: `reconstruction` needs
-    `reconstruct`, and nothing could build that.
-  - **It chains to a fixed point**, so a derived meaning can be a base for the
-    next one. That is what turns `reconstruct` into `reconstruction`.
+  - **It derives one prefix + a verb root directly** — `ex` + `press` is "to
+    press out" — which was the real gap. `-tion` words were missing not
+    because the frame was absent but because their bases were.
+  - **It composes a base even when English has no word for it.** `exception`
+    is ex + cap + tion, and its base ex + cap is not a word — but it still
+    means "to take out", which is all the suffix needs. Chaining through real
+    words alone never reached these.
+
+  Two prefixes were tried and declined. Stacking directions reads badly at the
+  end of a phrase: `re` means both "again" and "back", and whichever you pick,
+  one of "the act of building together back" or "to lead again" comes out
+  wrong. It bought two words and cost the grammar of both, so `reconstruction`
+  is still unannotated and that is the right answer.
 
   `-able` is no longer excluded; it needs a past participle, so there is a
   short irregular-verb table. Only verbs that actually appear as roots are in
