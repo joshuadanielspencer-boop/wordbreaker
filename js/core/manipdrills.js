@@ -13,6 +13,11 @@ import { load } from './store.js';
 import { speechAvailable } from './speech.js';
 
 const ACTIVITY = 'manipulate';
+// The oral drill draws on the SAME bank, so both modes share one spent set.
+// An item met aloud on Tuesday and typed on Thursday is not a manipulation the
+// second time — he remembers the answer, which is the recall the task exists
+// to rule out.
+export const ORAL_ACTIVITY = 'oralswap';
 
 /** A stable id per item, so one is never served twice. */
 export const itemId = i => `${i.level}|${i.word}|${i.cue}|${i.to || ''}`;
@@ -21,7 +26,9 @@ function used() {
   const S = load();
   const out = new Set();
   for (const r of (S?.log || [])) {
-    if (r.activity === ACTIVITY && r.detail?.item) out.add(r.detail.item);
+    if ((r.activity === ACTIVITY || r.activity === ORAL_ACTIVITY) && r.detail?.item) {
+      out.add(r.detail.item);
+    }
   }
   return out;
 }
@@ -57,8 +64,9 @@ function sample(pool, n) {
   return a.slice(0, n);
 }
 
-export function manipulationItems(n = 2) {
-  if (!speechAvailable()) return [];          // the word is spoken or not at all
+export function manipulationItems(n = 2, { requireSpeech = true } = {}) {
+  // The solo drill needs a voice; the oral one has an adult instead.
+  if (requireSpeech && !speechAvailable()) return [];
   const spent = used();
   const level = currentLevel();
   const at = MANIP_ORDER.indexOf(level);

@@ -337,6 +337,59 @@ const DAY = 86400000;
   console.warn = warn;
 }
 
+// -------------------------------------------------------- sound swap aloud
+{
+  describe('sound swap aloud');
+  const oral = await import('../js/core/oralswap.js');
+  const drills = await import('../js/core/manipdrills.js');
+  const { MANIP_ORDER } = await import('../js/content/manipulation.js');
+
+  profile();
+  const items = oral.oralItems(MANIP_ORDER[0], 5);
+  ok(items.length > 0, 'a run has items');
+  ok(items.every(i => i.level === MANIP_ORDER[0]), 'and they are on the rung asked for');
+
+  // THE invariant: both modes draw on one bank, so an item met aloud must
+  // never be typed later. The second meeting is recall, not manipulation.
+  for (const it of items) oral.recordOral(it, 'auto', 900);
+  const usedIds = new Set(items.map(i => i.id));
+  const typed = new Set();
+  for (let k = 0; k < 30; k++) for (const t of drills.manipulationItems(4)) typed.add(t.id);
+  ok([...usedIds].every(id => !typed.has(id)),
+    'an item used aloud never comes back in the typed drill');
+
+  const runs = oral.oralHistory();
+  eq(runs.length, 1, 'items scored together are one run');
+  eq(runs[0].items, items.length, 'with every item counted');
+  eq(runs[0].automatic, items.length, 'and the automatic ones marked');
+
+  // Kilpatrick advances after three or four consecutive automatic days. The
+  // app reports it; it never advances on its own, because it cannot hear him.
+  profile();
+  const mk = (level, n, verdict) => {
+    for (const it of oral.oralItems(level, n)) oral.recordOral(it, verdict, 900);
+  };
+  ok(!oral.readyToAdvance(MANIP_ORDER[0]), 'one good run is not three');
+  eq(oral.suggestedLevel(), MANIP_ORDER[0], 'and the rung does not move');
+
+  profile();
+  for (let k = 0; k < 3; k++) {
+    mk(MANIP_ORDER[0], 6, 'auto');
+    // push the run apart so they group as three, not one
+    for (const r of store.load().log) r.t -= 10 * 60000;
+  }
+  ok(oral.readyToAdvance(MANIP_ORDER[0]), 'three automatic runs is ready to move up');
+  eq(oral.suggestedLevel(), MANIP_ORDER[1], 'and the next rung is suggested');
+
+  profile();
+  for (let k = 0; k < 3; k++) {
+    mk(MANIP_ORDER[0], 6, 'slow');
+    for (const r of store.load().log) r.t -= 10 * 60000;
+  }
+  ok(!oral.readyToAdvance(MANIP_ORDER[0]),
+    'right but slow is not automatic, and does not advance him');
+}
+
 // ------------------------------------------------------------ reading aloud
 {
   describe('reading aloud');

@@ -28,6 +28,7 @@ import { voiceQuality } from '../core/speech.js';
 import { sessionPace } from '../core/fluency.js';
 import { readings, miscueMovement, MISCUE_TYPES, TYPE_LABEL } from '../core/readaloud.js';
 import { renderReadAloud } from './readaloud.js';
+import { renderOralSwap } from './oralswap.js';
 import { level, LEVEL_NAME, weakest, entry as mastEntry } from '../core/mastery.js';
 import { SKILLS, LADDER } from '../content/math.js';
 
@@ -133,6 +134,9 @@ export function renderTeacher(app, opts) {
       <button class="btn big" data-act="probe-spelling">
         Nonsense spelling probe${due(SPELLING) ? ' &nbsp;·&nbsp; due' : ''}
       </button>
+      <button class="btn big" data-act="oralswap">
+        Sound Swap, aloud &nbsp;·&nbsp; one minute
+      </button>
       <button class="btn big" data-act="readaloud">
         Reading aloud &nbsp;·&nbsp; log the miscues${readings().length ? ` &nbsp;·&nbsp; ${readings().length} so far` : ''}
       </button>
@@ -157,6 +161,8 @@ export function renderTeacher(app, opts) {
   app.querySelector('[data-act="back"]').onclick = onBack;
   app.querySelector('[data-act="past"]').onclick = () => renderPastForm(app, opts);
   app.querySelector('[data-act="backup"]').onclick = opts.onBackup;
+  app.querySelector('[data-act="oralswap"]').onclick = () =>
+    renderOralSwap(app, { onBack: () => renderTeacher(app, opts), onDone: () => renderTeacher(app, opts) });
   app.querySelector('[data-act="readaloud"]').onclick = () =>
     renderReadAloud(app, { onBack: () => renderTeacher(app, opts), onDone: () => renderTeacher(app, opts) });
   const pr = app.querySelector('[data-act="past-run"]');

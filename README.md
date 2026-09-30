@@ -165,6 +165,7 @@ js/core/manipdrills.js      which Sound Swap item comes next
 js/activities/manipulate.js the Sound Swap drill
 js/core/userlists.js  spelling lists typed in by an adult
 js/core/readaloud.js  oral-reading miscues, typed and counted
+js/core/oralswap.js   the adult-administered minute of phoneme manipulation
 js/ui/readaloud.js    the tap-while-listening screen
 tools/                serve.py, bundle.mjs, check.mjs, check-content.mjs,
                       gen-pseudo.mjs, gen-notes.mjs
@@ -612,6 +613,22 @@ producing a made-up automaticity profile would still *look* like evidence, and
 `docs/predictions.md` hangs the entire falsification of Branch B on "PAST all
 automatic at baseline". There is also a paper fallback: a quick recorder for a
 PAST run away from the computer.
+
+**Sound Swap, aloud** is the other half of the phoneme-manipulation drill. The
+solo version has him type the answer, which works without an adult but adds a
+spelling step and measures his hands as much as his phonology. Said out loud
+and judged inside two seconds is the form in which *automatic* is a real word,
+so the adult reads the item, he answers, and the adult taps. It runs for one
+minute, because Kilpatrick's block is a minute and the name is not decorative.
+
+Both halves draw on the same generated bank and **share one spent set**: an
+item met aloud on Tuesday is never typed on Thursday, because the second
+meeting is recall rather than manipulation — the exact thing the task exists to
+rule out. It is exercise rather than measurement and stays out of the evidence
+view; the PAST remains the instrument. The rungs are this app's own and are
+deliberately not labelled as Kilpatrick's lettered levels, for the same reason
+the PAST items are not shipped: a made-up level that reads like a real one is
+worse than none.
 
 **Reading aloud** is the one measure that needs nothing from the app but an
 adult's attention. He reads from his own book; the screen is a grid of large

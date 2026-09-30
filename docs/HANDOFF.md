@@ -135,6 +135,16 @@ the autopsy.** Guessing a seam to give the activity something to do would teach
 something untrue. If you add a way to decompose more words, improve the
 matcher — do not lower this bar.
 
+**Sound Swap's two halves share one spent set.** The typed drill and the oral
+one draw on the same bank, so `manipdrills.used()` counts BOTH activities. An
+item met aloud and then typed is answered from memory, which is the recall the
+task exists to rule out. Anything else that draws on that bank must subtract
+the same set.
+
+**Do not label this app's manipulation rungs as Kilpatrick's levels.** They are
+not his, his sequencing advice is keyed to his, and a made-up level that reads
+like a real one is the same error as inventing PAST items.
+
 **An adaptive ladder cannot be an outcome measure.** `currentPattern()` holds
 accuracy in a band by design. Growth shows there as the rung reached, never as
 the score. If someone asks for "the accuracy trend from his dictation
@@ -155,8 +165,8 @@ Built, Phase 3     Teacher area — PAST administration (form loaded by the
                    whole-list spelling test
 Built, solo        Sound Swap — phoneme manipulation, typed, two a session
 Built, teacher     Reading Aloud — typed miscue log; the mix is the measure
-Not built          One Minute Activities as Kilpatrick runs them (oral, adult,
-                   two-second window), Phase 4 word-study enrichment
+Built, teacher     Sound Swap aloud — the adult-administered minute
+Not built          Phase 4 word-study enrichment
 ```
 
 **Gate 0 is the blocker, and it is not a coding task.** All three baselines can
